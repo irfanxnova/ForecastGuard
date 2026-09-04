@@ -167,7 +167,42 @@ Do not silently change grids.
 
 ---
 
-# 8. FORECAST BUST DEFINITION
+# 8. CURRENT RAINFALL ALIGNMENT CONTRACT
+
+The current forecast sample is the NCMRWF/TIGGE forecast initialized at
+2025-09-01 00:00 UTC. Its variable is total precipitation (`tp`) with:
+
+- `stepType = accum`
+- `startStep = 0 h`
+- `endStep = 24 h`
+
+Therefore, the forecast quantity is precipitation accumulated over the
+forecast's 0–24 h window.
+
+The current MERA sample consists of 24 hourly NetCDF files:
+
+`mera_2025090100.nc` through `mera_2025090123.nc`
+
+Their timestamps span 2025-09-01 00:00 through 23:00. The files do not
+provide an explicit `Rainfall` unit attribute or explicit
+accumulation-window metadata.
+
+Forecast-vs-MERA rainfall verification MUST NOT assume that a MERA
+timestamp represents either the beginning or the end of an accumulation
+interval. The MERA timestamp and accumulation convention must first be
+established from authoritative documentation or another defensible
+source. Until then, the observation accumulation window is
+`UNSPECIFIED`. No code may silently infer or invent this convention.
+
+Once the observation convention is established, forecast and observation
+windows must represent the same physical accumulation period. Spatial
+regridding must also be explicitly documented and must not silently alter
+the scientific meaning of the data. All alignment transformations must
+be reproducible and auditable.
+
+---
+
+# 9. FORECAST BUST DEFINITION
 
 Forecast bust must NOT be defined using one arbitrary universal RMSE
 threshold.
