@@ -17,6 +17,7 @@ from scientific.ingestion.mera import (
     read_mera_file,
     read_mera_observations,
 )
+from scientific.ingestion.imd import ImdDailyObservation, read_imd_daily_file
 
 __all__ = [
     "GribMessageMetadata",
@@ -32,4 +33,6 @@ __all__ = [
     "MeraQCReport",
     "read_mera_file",
     "read_mera_observations",
+    "ImdDailyObservation",
+    "read_imd_daily_file",
 ]
