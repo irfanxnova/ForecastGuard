@@ -65,6 +65,7 @@ data/features/*
 !data/features/.gitkeep
 data/manifests/*
 !data/manifests/.gitkeep
+!data/manifests/*.json
 
 # Large binary / model artifacts
 *.grib
