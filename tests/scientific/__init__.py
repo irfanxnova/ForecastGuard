@@ -1,0 +1,1 @@
+"""Scientific structure tests package."""

@@ -1,0 +1,1 @@
+"""ForecastGuard test suite."""
