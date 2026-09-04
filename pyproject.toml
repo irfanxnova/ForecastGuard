@@ -30,6 +30,9 @@ dev = [
     "ruff>=0.3.0",
 ]
 
+[project.scripts]
+forecastguard-case = "scientific.cases.cli:main"
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
