@@ -18,9 +18,38 @@ from scientific.dataset.builder import (
     DatasetRecordStatus,
     build_dataset_record,
 )
+from scientific.dataset.assembly import (
+    AssembledSample,
+    AssemblyError,
+    AssemblyLeakageError,
+    SampleStatus,
+    TARGET_METRIC_NAMES,
+    assemble_sample,
+    assemble_samples,
+)
+from scientific.dataset.splits import (
+    ChronologicalSplitter,
+    SplitConfigurationError,
+    SplitDataError,
+    SplitResult,
+)
 
 __all__ = [
+    # builder
     "DatasetRecord",
     "DatasetRecordStatus",
     "build_dataset_record",
+    # assembly
+    "AssembledSample",
+    "AssemblyError",
+    "AssemblyLeakageError",
+    "SampleStatus",
+    "TARGET_METRIC_NAMES",
+    "assemble_sample",
+    "assemble_samples",
+    # splits
+    "ChronologicalSplitter",
+    "SplitConfigurationError",
+    "SplitDataError",
+    "SplitResult",
 ]
