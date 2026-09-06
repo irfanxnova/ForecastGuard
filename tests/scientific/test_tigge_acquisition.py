@@ -1,6 +1,8 @@
 """Unit tests for explicit, offline NCMRWF/TIGGE ECDS acquisition."""
 
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -176,3 +178,19 @@ def test_cli_dry_run_prints_exact_request_without_credentials(tmp_path: Path, ca
     assert status == 0
     assert payload["status"] == "DRY_RUN"
     assert payload["request"]["request_parameters"]["number"] == "1/2/3"
+
+
+def test_module_cli_dry_run_emits_no_runtime_warning(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable, "-W", "error::RuntimeWarning", "-m",
+            "scientific.ingestion.tigge", "--dry-run", "--date", "2025-09-01",
+            "--output", str(tmp_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "found in sys.modules" not in completed.stderr

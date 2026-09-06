@@ -18,6 +18,7 @@ from scientific.cases.manifest import (
     ManifestValidationError,
     _validate_spec,
 )
+from scientific.cases.planner import PlannedCase
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +91,69 @@ class TestCaseSpec:
         assert CaseSpec.from_dict(spec.to_dict()).observation_window_metadata == (
             spec.observation_window_metadata
         )
+
+    def test_planned_case_factory_preserves_matching_exact_timestamps(self):
+        planned_case = PlannedCase(
+            case_id="planned_valid",
+            forecast_initialization_time=datetime(2025, 9, 1, 3, tzinfo=_UTC),
+            forecast_lead_hours=24,
+            forecast_source="NCMRWF",
+            forecast_variable="tp",
+            observation_source="IMD_DAILY",
+            observation_date="2025-09-02",
+            region="India",
+            observation_start=None,
+            observation_end=None,
+            observation_window_specified=False,
+            forecast_path=None,
+            observation_path=None,
+            trajectory_group_id="tg_valid",
+            sequence_index=0,
+            predecessor_init_time=None,
+            cycle_label="03Z",
+            forecast_accumulation_end=datetime(2025, 9, 2, 3, tzinfo=_UTC),
+        )
+
+        spec = CaseSpec.from_planned_case_for_imd_daily_merged_satellite_gauge(
+            planned_case,
+            forecast_path="data/raw/tigge/matching.grib",
+            observation_path="data/raw/observations/imd_daily/02092025.grd",
+        )
+
+        assert spec.forecast_accumulation_start == datetime(2025, 9, 1, 3, tzinfo=_UTC)
+        assert spec.forecast_accumulation_end == datetime(2025, 9, 2, 3, tzinfo=_UTC)
+        assert spec.observation_start == spec.forecast_accumulation_start
+        assert spec.observation_end == spec.forecast_accumulation_end
+        assert spec.to_dict() == CaseSpec.from_dict(spec.to_dict()).to_dict()
+
+    def test_planned_00z_24h_case_is_rejected_for_imd_03z_target(self):
+        planned_case = PlannedCase(
+            case_id="known_mismatch",
+            forecast_initialization_time=datetime(2025, 9, 1, 0, tzinfo=_UTC),
+            forecast_lead_hours=24,
+            forecast_source="NCMRWF",
+            forecast_variable="tp",
+            observation_source="IMD_DAILY",
+            observation_date="2025-09-02",
+            region="India",
+            observation_start=None,
+            observation_end=None,
+            observation_window_specified=False,
+            forecast_path=None,
+            observation_path=None,
+            trajectory_group_id="tg_mismatch",
+            sequence_index=0,
+            predecessor_init_time=None,
+            cycle_label="00Z",
+            forecast_accumulation_end=datetime(2025, 9, 2, 0, tzinfo=_UTC),
+        )
+
+        with pytest.raises(ValueError, match="accumulation windows differ"):
+            CaseSpec.from_planned_case_for_imd_daily_merged_satellite_gauge(
+                planned_case,
+                forecast_path="data/raw/tigge/mismatch.grib",
+                observation_path="data/raw/observations/imd_daily/02092025.grd",
+            )
 
     def test_spec_is_frozen(self):
         spec = _make_spec()

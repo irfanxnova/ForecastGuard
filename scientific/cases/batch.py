@@ -348,6 +348,8 @@ def _build_provenance(
         "observation_path": spec.observation_path,
         "forecast_initialization_time": spec.forecast_initialization_time.isoformat(),
         "forecast_lead_hours": spec.forecast_lead_hours,
+        "forecast_accumulation_start": spec.forecast_accumulation_start.isoformat(),
+        "forecast_accumulation_end": spec.forecast_accumulation_end.isoformat(),
         "forecast_source": spec.forecast_source,
         "forecast_variable": spec.forecast_variable,
         "observation_date": spec.observation_date,

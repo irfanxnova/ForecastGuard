@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
@@ -126,6 +126,18 @@ class CaseSpec:
     region: Optional[str] = None
     notes: Optional[str] = None
     observation_window_metadata: Optional[Dict[str, Any]] = None
+
+    @property
+    def forecast_accumulation_start(self) -> datetime:
+        """Expected forecast accumulation start implied by this planned case."""
+        return self.forecast_initialization_time
+
+    @property
+    def forecast_accumulation_end(self) -> datetime:
+        """Expected forecast accumulation end implied by this planned case."""
+        return self.forecast_initialization_time + timedelta(
+            hours=self.forecast_lead_hours
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a JSON-compatible dictionary.
@@ -244,6 +256,55 @@ class CaseSpec:
             forecast_source=forecast_source,
             forecast_variable=forecast_variable,
             region=region,
+            notes=notes,
+            observation_window_metadata=window.to_dict(),
+        )
+
+    @classmethod
+    def from_planned_case_for_imd_daily_merged_satellite_gauge(
+        cls,
+        planned_case: Any,
+        *,
+        forecast_path: str,
+        observation_path: str,
+        notes: Optional[str] = None,
+    ) -> "CaseSpec":
+        """Create an IMD case only when a planned forecast window matches exactly.
+
+        The forecast window is derived from the planner's exact initialization
+        and lead. No archive availability or returned-GRIB accumulation metadata
+        is inferred here; the existing verification layer remains authoritative.
+        """
+        from scientific.ingestion.imd import imd_daily_merged_satellite_gauge_window
+
+        forecast_start = planned_case.forecast_initialization_time
+        forecast_end = planned_case.forecast_accumulation_end
+        expected_end = forecast_start + timedelta(hours=planned_case.forecast_lead_hours)
+        if forecast_end != expected_end:
+            raise ValueError(
+                "PlannedCase forecast_accumulation_end does not match its "
+                "initialization time and lead"
+            )
+
+        window = imd_daily_merged_satellite_gauge_window(planned_case.observation_date)
+        if (forecast_start, forecast_end) != (window.start, window.end):
+            raise ValueError(
+                "Cannot pair planned forecast with IMD daily merged satellite-gauge "
+                "observation: forecast and observation accumulation windows differ"
+            )
+
+        return cls(
+            case_id=planned_case.case_id,
+            forecast_path=forecast_path,
+            observation_path=observation_path,
+            observation_date=window.observation_date.isoformat(),
+            observation_start=window.start,
+            observation_end=window.end,
+            forecast_initialization_time=forecast_start,
+            forecast_lead_hours=planned_case.forecast_lead_hours,
+            forecast_source=planned_case.forecast_source,
+            forecast_variable=planned_case.forecast_variable,
+            region=planned_case.region,
             notes=notes,
             observation_window_metadata=window.to_dict(),
         )
