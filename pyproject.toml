@@ -19,6 +19,7 @@ dependencies = [
     "pydantic-settings>=2.2.0",
     "httpx>=0.27.0",
     "eccodes>=1.6.0",
+    "cdsapi>=0.7.7",
     "numpy>=1.24.0",
     "xarray>=2024.1.0",
 ]
@@ -32,6 +33,7 @@ dev = [
 
 [project.scripts]
 forecastguard-case = "scientific.cases.cli:main"
+forecastguard-tigge = "scientific.ingestion.tigge:main"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
