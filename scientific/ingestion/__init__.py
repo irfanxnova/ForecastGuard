@@ -17,7 +17,13 @@ from scientific.ingestion.mera import (
     read_mera_file,
     read_mera_observations,
 )
-from scientific.ingestion.imd import ImdDailyObservation, read_imd_daily_file
+from scientific.ingestion.imd import (
+    IMD_DAILY_MERGED_SATELLITE_GAUGE_PRODUCT,
+    ImdDailyObservation,
+    ImdDailyObservationWindow,
+    imd_daily_merged_satellite_gauge_window,
+    read_imd_daily_file,
+)
 
 __all__ = [
     "GribMessageMetadata",
@@ -34,5 +40,8 @@ __all__ = [
     "read_mera_file",
     "read_mera_observations",
     "ImdDailyObservation",
+    "ImdDailyObservationWindow",
+    "IMD_DAILY_MERGED_SATELLITE_GAUGE_PRODUCT",
+    "imd_daily_merged_satellite_gauge_window",
     "read_imd_daily_file",
 ]

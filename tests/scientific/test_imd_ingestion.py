@@ -1,18 +1,57 @@
 """Tests for IMD daily binary rainfall ingestion."""
 
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 import numpy as np
 import pytest
 
 from scientific.ingestion.imd import (
+    IMD_DAILY_MERGED_SATELLITE_GAUGE_PRODUCT,
     IMD_EXPECTED_BYTE_LENGTH,
     IMD_EXPECTED_VALUE_COUNT,
+    imd_daily_merged_satellite_gauge_window,
     read_imd_daily_file,
 )
 
 
 EXPECTED_SHAPE = (281, 241)
+UTC = timezone.utc
+
+
+class TestImdDailyMergedSatelliteGaugeWindow:
+    """Product-scoped temporal metadata, independent of the IMD file reader."""
+
+    def test_observation_date_maps_to_03_utc_end_and_24_hour_start(self) -> None:
+        window = imd_daily_merged_satellite_gauge_window("2025-09-02")
+
+        assert window.product == IMD_DAILY_MERGED_SATELLITE_GAUGE_PRODUCT
+        assert window.end == datetime(2025, 9, 2, 3, tzinfo=UTC)
+        assert window.start == datetime(2025, 9, 1, 3, tzinfo=UTC)
+        assert window.end - window.start == timedelta(hours=24)
+
+    def test_window_is_utc_aware(self) -> None:
+        window = imd_daily_merged_satellite_gauge_window(date(2025, 9, 2))
+
+        assert window.start.tzinfo is UTC
+        assert window.end.tzinfo is UTC
+
+    @pytest.mark.parametrize("value", ["2025-02-30", "2025-09-02T03:00:00"])
+    def test_invalid_observation_date_or_time_is_rejected(self, value: str) -> None:
+        with pytest.raises(ValueError, match="ISO date"):
+            imd_daily_merged_satellite_gauge_window(value)
+
+    def test_datetime_input_is_rejected_without_discarding_its_time(self) -> None:
+        with pytest.raises(TypeError, match="calendar date"):
+            imd_daily_merged_satellite_gauge_window(
+                datetime(2025, 9, 2, 3, tzinfo=UTC)
+            )
+
+    def test_metadata_preserves_product_scoped_documented_basis(self) -> None:
+        metadata = imd_daily_merged_satellite_gauge_window("2025-09-02").to_dict()
+
+        assert metadata["window_hours"] == 24
+        assert "0830 IST" in metadata["basis"]
+        assert "03:00 UTC" in metadata["basis"]
 
 
 def write_grid(path, values: np.ndarray) -> None:

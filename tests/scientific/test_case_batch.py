@@ -237,6 +237,23 @@ class TestSpecToRainfallCase:
         assert rc.observation_start == _OBS_START
         assert rc.observation_end == _OBS_END
 
+    def test_imd_window_metadata_is_transferred_to_case_runner(self):
+        spec = CaseSpec.for_imd_daily_merged_satellite_gauge(
+            case_id="imd_window_case",
+            forecast_path="data/raw/tigge/test.grib",
+            observation_path="data/raw/observations/imd_daily/test.grd",
+            observation_date="2025-09-02",
+            forecast_initialization_time=datetime(2025, 9, 1, 3, tzinfo=_UTC),
+            forecast_lead_hours=24,
+            forecast_source="NCMRWF",
+            forecast_variable="tp",
+        )
+
+        rainfall_case = _spec_to_rainfall_case(spec)
+        assert rainfall_case.observation_start == spec.observation_start
+        assert rainfall_case.observation_end == spec.observation_end
+        assert rainfall_case.observation_window_metadata == spec.observation_window_metadata
+
     def test_forecast_path_is_path_object(self):
         spec = _make_spec()
         rc = _spec_to_rainfall_case(spec)

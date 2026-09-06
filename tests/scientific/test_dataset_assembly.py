@@ -371,7 +371,7 @@ class TestAssembleSampleLeakage:
         )
 
     def test_verification_accumulation_end_not_in_predictors(self):
-        """Forecast accumulation end time must not enter predictor_dict.
+        """Observation-window data must not enter predictor_dict.
         Only forecast_initialization_time and forecast_lead_hours are allowed
         as temporal predictors.
         """
@@ -379,6 +379,7 @@ class TestAssembleSampleLeakage:
         assert "forecast_accumulation_end" not in sample.predictor_dict
         assert "observation_accumulation_end" not in sample.predictor_dict
         assert "observation_accumulation_start" not in sample.predictor_dict
+        assert "observation_window_metadata" not in sample.predictor_dict
 
 
 # ---------------------------------------------------------------------------

@@ -75,6 +75,9 @@ class RainfallCase:
 	observation_end: Optional[datetime] = None
 	"""Observation accumulation window end (explicit, must be exact)."""
 
+	observation_window_metadata: Optional[Dict[str, Any]] = None
+	"""Product-scoped provenance for the supplied observation window."""
+
 
 @dataclass(frozen=True)
 class RainfallCaseResult:
@@ -184,6 +187,7 @@ def run_rainfall_case(case: RainfallCase) -> RainfallCaseResult:
 		"case_id": case.case_id,
 		"forecast_path": str(case.forecast_path),
 		"observation_path": str(case.observation_path),
+		"observation_window_metadata": case.observation_window_metadata,
 	}
 
 	# Load forecast
@@ -288,6 +292,7 @@ def run_rainfall_case(case: RainfallCase) -> RainfallCaseResult:
 		observation,
 		observation_start=case.observation_start,
 		observation_end=case.observation_end,
+		observation_window_metadata=case.observation_window_metadata,
 	)
 
 	# Build case result

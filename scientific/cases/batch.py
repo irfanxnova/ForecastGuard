@@ -314,6 +314,7 @@ def _spec_to_rainfall_case(spec: CaseSpec) -> RainfallCase:
         observation_date=spec.observation_date,
         observation_start=spec.observation_start,
         observation_end=spec.observation_end,
+        observation_window_metadata=spec.observation_window_metadata,
     )
 
 
@@ -352,6 +353,7 @@ def _build_provenance(
         "observation_date": spec.observation_date,
         "observation_start": spec.observation_start.isoformat(),
         "observation_end": spec.observation_end.isoformat(),
+        "observation_window_metadata": spec.observation_window_metadata,
         "stages_completed": stages_completed,
     }
     if extra:

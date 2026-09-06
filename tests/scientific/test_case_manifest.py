@@ -71,6 +71,26 @@ class TestCaseSpec:
         assert spec.case_id == "case_001"
         assert spec.forecast_lead_hours == 24
 
+    def test_imd_daily_product_factory_supplies_explicit_window_and_provenance(self):
+        spec = CaseSpec.for_imd_daily_merged_satellite_gauge(
+            case_id="imd_window_case",
+            forecast_path="data/raw/tigge/forecast.grib",
+            observation_path="data/raw/observations/imd_daily/obs.grd",
+            observation_date="2025-09-02",
+            forecast_initialization_time=datetime(2025, 9, 1, 3, tzinfo=_UTC),
+            forecast_lead_hours=24,
+            forecast_source="NCMRWF",
+            forecast_variable="tp",
+        )
+
+        assert spec.observation_start == datetime(2025, 9, 1, 3, tzinfo=_UTC)
+        assert spec.observation_end == datetime(2025, 9, 2, 3, tzinfo=_UTC)
+        assert spec.observation_window_metadata is not None
+        assert "0830 IST" in spec.observation_window_metadata["basis"]
+        assert CaseSpec.from_dict(spec.to_dict()).observation_window_metadata == (
+            spec.observation_window_metadata
+        )
+
     def test_spec_is_frozen(self):
         spec = _make_spec()
         with pytest.raises((AttributeError, TypeError)):

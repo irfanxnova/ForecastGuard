@@ -107,6 +107,10 @@ class CaseSpec:
 
     notes : Optional[str]
         Optional free-text notes for auditability.
+
+    observation_window_metadata : Optional[Dict[str, Any]]
+        Optional provenance for the explicit observation-window convention.
+        This is metadata only; it never becomes a predictor feature.
     """
 
     case_id: str
@@ -121,6 +125,7 @@ class CaseSpec:
     forecast_variable: str
     region: Optional[str] = None
     notes: Optional[str] = None
+    observation_window_metadata: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a JSON-compatible dictionary.
@@ -140,6 +145,7 @@ class CaseSpec:
             "forecast_variable": self.forecast_variable,
             "region": self.region,
             "notes": self.notes,
+            "observation_window_metadata": self.observation_window_metadata,
         }
 
     @classmethod
@@ -200,6 +206,46 @@ class CaseSpec:
             forecast_variable=str(d["forecast_variable"]),
             region=d.get("region"),
             notes=d.get("notes"),
+            observation_window_metadata=d.get("observation_window_metadata"),
+        )
+
+    @classmethod
+    def for_imd_daily_merged_satellite_gauge(
+        cls,
+        *,
+        case_id: str,
+        forecast_path: str,
+        observation_path: str,
+        observation_date: str,
+        forecast_initialization_time: datetime,
+        forecast_lead_hours: int,
+        forecast_source: str,
+        forecast_variable: str,
+        region: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> "CaseSpec":
+        """Create a CaseSpec using the documented IMD daily product convention.
+
+        The returned window is explicit and serialized with its product-scoped
+        provenance; generic CaseSpec construction remains explicit by default.
+        """
+        from scientific.ingestion.imd import imd_daily_merged_satellite_gauge_window
+
+        window = imd_daily_merged_satellite_gauge_window(observation_date)
+        return cls(
+            case_id=case_id,
+            forecast_path=forecast_path,
+            observation_path=observation_path,
+            observation_date=window.observation_date.isoformat(),
+            observation_start=window.start,
+            observation_end=window.end,
+            forecast_initialization_time=forecast_initialization_time,
+            forecast_lead_hours=forecast_lead_hours,
+            forecast_source=forecast_source,
+            forecast_variable=forecast_variable,
+            region=region,
+            notes=notes,
+            observation_window_metadata=window.to_dict(),
         )
 
 

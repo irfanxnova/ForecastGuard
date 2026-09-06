@@ -72,6 +72,7 @@ def _blocked_result(
     forecast_end: Optional[datetime] = None,
     observation_start: Optional[datetime] = None,
     observation_end: Optional[datetime] = None,
+    observation_window_metadata: Optional[Dict[str, Any]] = None,
 ) -> RainfallVerificationResult:
     return RainfallVerificationResult(
         status=status,
@@ -93,6 +94,7 @@ def _blocked_result(
             "observation_source": observation.source_file,
             "observation_date": observation.observation_date,
             "observation_accumulation_window": observation.accumulation_window,
+            "observation_window_metadata": observation_window_metadata,
         },
     )
 
@@ -103,6 +105,7 @@ def verify_rainfall(
     observation: ImdDailyObservation,
     observation_start: Optional[datetime] = None,
     observation_end: Optional[datetime] = None,
+    observation_window_metadata: Optional[Dict[str, Any]] = None,
 ) -> RainfallVerificationResult:
     """Verify an explicit 0-24 hour forecast against an IMD rainfall field.
 
@@ -114,7 +117,11 @@ def verify_rainfall(
         target_latitude, target_longitude = _target_coordinates(forecast)
     except ValueError as exc:
         return _blocked_result(
-            RainfallVerificationStatus.INVALID_METADATA, str(exc), forecast, observation
+            RainfallVerificationStatus.INVALID_METADATA,
+            str(exc),
+            forecast,
+            observation,
+            observation_window_metadata=observation_window_metadata,
         )
 
     if forecast.units != "kg m**-2":
@@ -123,6 +130,7 @@ def verify_rainfall(
             "Forecast precipitation units must be kg m**-2",
             forecast,
             observation,
+            observation_window_metadata=observation_window_metadata,
         )
     if forecast.start_step != 0 or forecast.end_step != 24:
         return _blocked_result(
@@ -130,6 +138,7 @@ def verify_rainfall(
             "Forecast precipitation must have startStep=0 and endStep=24",
             forecast,
             observation,
+            observation_window_metadata=observation_window_metadata,
         )
     if forecast_array.shape != (forecast.nj, forecast.ni):
         return _blocked_result(
@@ -137,6 +146,7 @@ def verify_rainfall(
             "Forecast values shape does not match forecast grid metadata",
             forecast,
             observation,
+            observation_window_metadata=observation_window_metadata,
         )
 
     alignment = validate_rainfall_alignment(
@@ -164,6 +174,7 @@ def verify_rainfall(
             observation_start is not None
             and observation_end is not None
         ),
+        "observation_window_metadata": observation_window_metadata,
     }
     if alignment.status is not AlignmentStatus.ALIGNED:
         return RainfallVerificationResult(

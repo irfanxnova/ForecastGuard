@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 
 from scientific.ingestion.grib import GribMessageMetadata
-from scientific.ingestion.imd import ImdDailyObservation
+from scientific.ingestion.imd import (
+    ImdDailyObservation,
+    imd_daily_merged_satellite_gauge_window,
+)
 from scientific.verification import (
     RainfallVerificationStatus,
     verify_rainfall,
@@ -122,6 +125,23 @@ def test_unspecified_observation_window_blocks_without_calculation() -> None:
     assert result.forecast_end == datetime(2025, 9, 2, tzinfo=UTC)
     assert result.observation_start is None
     assert result.observation_end is None
+
+
+def test_explicit_imd_daily_window_reaches_verification_with_provenance() -> None:
+    window = imd_daily_merged_satellite_gauge_window("2025-09-02")
+    result = verify_rainfall(
+        _forecast(data_date=20250901, data_time=300),
+        np.ones((2, 2)),
+        _observation(np.zeros((2, 2)), observation_date=window.observation_date),
+        observation_start=window.start,
+        observation_end=window.end,
+        observation_window_metadata=window.to_dict(),
+    )
+
+    assert result.status is RainfallVerificationStatus.ALIGNED
+    assert result.observation_start == window.start
+    assert result.observation_end == window.end
+    assert result.provenance["observation_window_metadata"] == window.to_dict()
 
 
 def test_mismatched_temporal_windows_are_blocked_without_calculation() -> None:
