@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "product": {
+    "product_id": 102,
+    "product_name": "nrt-6hour-rainfall-nrt-observations",
+    "product_alias": "NRT 6hour rainfall",
+    "description": "NRT 6hour rainfall of NRT in observations",
+    "product_type": "static_links",
+    "base_url": null,
+    "base_url_rules": [],
+    "date_rule": {},
+    "params": {},
+    "static_links": [
+      "/MERA_NRT_RADAR/Animation_last_6hr.gif"
+    ],
+    "tags": [
+      "observations",
+      "observation",
+      "NRT",
+      "nrt",
+      "nrt 6hr",
+      "nrt 6hour",
+      "nrt 6",
+      "6hr"
+    ],
+    "static_redirect": false,
+    "weather_model": "observations",
+    "urls": [
+      "https://nwp.ncmrwf.gov.in/MERA_NRT_RADAR/Animation_last_6hr.gif"
+    ]
+  }
+}

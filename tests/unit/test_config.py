@@ -9,7 +9,7 @@ def test_default_settings() -> None:
     assert settings.backend_host == "127.0.0.1"
     assert settings.backend_port == 8000
     assert settings.service_name == "ForecastGuard API"
-    assert settings.version == "0.1.0"
+    assert settings.version == "1.0.0"
     assert settings.api_v1_prefix == "/api/v1"
     assert "http://localhost:5173" in settings.cors_origins
 

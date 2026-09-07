@@ -1,0 +1,8 @@
+model,held_out_brier,held_out_ece,held_out_accuracy,loocv_brier,loocv_ece,loocv_accuracy,earliest_warning_lead_hours,delta_vs_previous_brier,decision,justification
+M0_Climatology,0.3295,0.5597,0.4286,0.3086,0.3848,0.3795,Nominal,0.0,INCONCLUSIVE,Marginal difference on pilot sample size; does not significantly separate from spread baseline.
+M1_SpreadOnly,0.3302,0.5605,0.4286,0.3213,0.4277,0.3597,Nominal,0.0007,RETAINED,Established baseline: scalar ensemble spread.
+M2_Spread_Trajectory,0.2677,0.4637,0.4762,0.2774,0.3482,0.5209,Nominal,-0.0625,RETAINED,"Showed prospective calibration improvement in current pilot evaluation (delta ECE: -0.0968, delta Brier: -0.0625); provisional pending larger multi-season sample."
+M3_Spread_Geometry,0.185,0.4172,0.7619,0.2887,0.3842,0.6212,Nominal,-0.0827,RETAINED,"Showed prospective calibration improvement in current pilot evaluation (delta ECE: -0.1433, delta Brier: -0.1452); provisional pending larger multi-season sample."
+M4_Spread_CycleInstability,0.5186,0.704,0.0952,0.3616,0.4708,0.3398,Nominal,0.3336,KILLED,"Degrades out-of-event validation metrics (delta Brier: +0.1884, delta ECE: +0.1435). Complexity not earned."
+M5_Spread_FalseConfidence,0.3619,0.5818,0.3333,0.2956,0.3766,0.5083,Nominal,-0.1567,KILLED,"Degrades out-of-event validation metrics (delta Brier: +0.0317, delta ECE: +0.0213). Complexity not earned."
+M6_CombinedCandidate,0.1798,0.3818,0.7619,0.2728,0.354,0.6212,Nominal,-0.1821,RETAINED,"Showed prospective calibration improvement in current pilot evaluation (delta ECE: -0.1786, delta Brier: -0.1504); provisional pending larger multi-season sample."

@@ -1,0 +1,482 @@
+{
+  "title": "ForecastGuard Milestone P3 \u2014 Prospective Future-Bust Experiment",
+  "timestamp_utc": "2026-09-07T07:06:38.233670+00:00",
+  "cycles_evaluated": [
+    {
+      "cyclone_name": "MOCHA",
+      "cycle_label": "MOCHA_00Z",
+      "init_time": "2023-05-10T00:00:00+00:00",
+      "role": "training",
+      "lead_count": 8
+    },
+    {
+      "cyclone_name": "BIPARJOY",
+      "cycle_label": "BIPARJOY_00Z",
+      "init_time": "2023-06-07T00:00:00+00:00",
+      "role": "training",
+      "lead_count": 8
+    },
+    {
+      "cyclone_name": "BIPARJOY",
+      "cycle_label": "BIPARJOY_12Z",
+      "init_time": "2023-06-07T12:00:00+00:00",
+      "role": "training",
+      "lead_count": 8
+    },
+    {
+      "cyclone_name": "MICHAUNG",
+      "cycle_label": "MICHAUNG_00Z",
+      "init_time": "2023-12-01T00:00:00+00:00",
+      "role": "held_out_test",
+      "lead_count": 8
+    },
+    {
+      "cyclone_name": "MICHAUNG",
+      "cycle_label": "MICHAUNG_12Z",
+      "init_time": "2023-12-01T12:00:00+00:00",
+      "role": "held_out_test",
+      "lead_count": 8
+    }
+  ],
+  "continuous_error_stats": {
+    "count": 40,
+    "mae_km": 60.90873800310301,
+    "rmse_km": 67.30893176926124,
+    "median_error_km": 58.63928682299154,
+    "percentile_75_km": 82.79538366847669,
+    "percentile_90_km": 99.82323167537764,
+    "min_error_km": 11.360821642756843,
+    "max_error_km": 118.27696620104938
+  },
+  "ablation_held_out_metrics": {
+    "M0_Climatology": {
+      "model_name": "M0_Climatology",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M1_SpreadOnly": {
+      "model_name": "M1_SpreadOnly",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M2_Spread_Trajectory": {
+      "model_name": "M2_Spread_Trajectory",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M3_Spread_Geometry": {
+      "model_name": "M3_Spread_Geometry",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M4_Spread_CycleInstability": {
+      "model_name": "M4_Spread_CycleInstability",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M5_Spread_FalseConfidence": {
+      "model_name": "M5_Spread_FalseConfidence",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "M6_CombinedCandidate": {
+      "model_name": "M6_CombinedCandidate",
+      "brier_score": 0.0,
+      "roc_auc": null,
+      "pr_auc": null,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "loocv_scores": {
+    "M0_Climatology": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M1_SpreadOnly": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M2_Spread_Trajectory": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M3_Spread_Geometry": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M4_Spread_CycleInstability": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M5_Spread_FalseConfidence": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    },
+    "M6_CombinedCandidate": {
+      "brier": 0.0,
+      "ece": 0.0,
+      "acc": 1.0
+    }
+  },
+  "keep_kill_decisions": {
+    "M0_Climatology": {
+      "feature_family": "M0_Climatology",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    },
+    "M1_SpreadOnly": {
+      "feature_family": "M1_Baseline_Spread",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "RETAINED",
+      "scientific_justification": "Established baseline: scalar ensemble spread."
+    },
+    "M2_Spread_Trajectory": {
+      "feature_family": "M2_Spread_Trajectory",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    },
+    "M3_Spread_Geometry": {
+      "feature_family": "M3_Spread_Geometry",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    },
+    "M4_Spread_CycleInstability": {
+      "feature_family": "M4_Spread_CycleInstability",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    },
+    "M5_Spread_FalseConfidence": {
+      "feature_family": "M5_Spread_FalseConfidence",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    },
+    "M6_CombinedCandidate": {
+      "feature_family": "M6_CombinedCandidate",
+      "brier_score": 0.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "warning_lead_hours": null,
+      "delta_brier_vs_m1": 0.0,
+      "delta_ece_vs_m1": 0.0,
+      "status": "INCONCLUSIVE",
+      "scientific_justification": "Marginal difference on pilot sample size; does not significantly separate from spread baseline."
+    }
+  },
+  "best_retained_model": "M1_SpreadOnly",
+  "bust_atlas_count": 2,
+  "provenance": {
+    "framework": "ForecastGuard Milestone P3 Prospective Reliability Engine",
+    "ncmrwf_source": {
+      "dataset": "tigge-forecasts",
+      "origin": "dems",
+      "model": "NCMRWF NEPS 11-member perturbed ensemble",
+      "resolution": "0.5 degree grid, 6-hourly archived steps",
+      "variable": "Mean sea level pressure (msl, param=151)"
+    },
+    "imd_source": {
+      "authority": "RSMC New Delhi / India Meteorological Department",
+      "product": "Official Best Tracks Data (1982-2026)",
+      "temporal_resolution": "6-hourly synoptic fixes"
+    },
+    "prospective_target_definition": "Binary bust label for forecast error >= threshold occurring at lead t' in (t, t + 24h]",
+    "anti_leakage_guarantee": "Features at lead t strictly depend on forecast leads t' <= t and cycles <= current cycle"
+  }
+}

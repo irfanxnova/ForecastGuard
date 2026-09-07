@@ -1,0 +1,18 @@
+{
+  "experiment_id": "m4_real_data_baseline",
+  "status": "NO_SCIENTIFIC_TRAINING_DATA",
+  "model_name": "calibrated_logistic",
+  "features_used": [],
+  "target": "MAJOR/SEVERE",
+  "split_definition": {
+    "mode": "empty"
+  },
+  "training_sample_count": 0,
+  "validation_sample_count": 0,
+  "test_sample_count": 0,
+  "metrics": {},
+  "calibration_info": {},
+  "feature_importances": {},
+  "scientific_disclaimer": "Zero valid real training cases currently exist in the dataset. In strict accordance with the ForecastGuard Constitution (AGENTS.md), no synthetic data or risk scores are presented as real scientific results.",
+  "created_at": "2026-09-07T01:40:41.407034+00:00"
+}

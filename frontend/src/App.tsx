@@ -1,234 +1,363 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { TopBar } from "./components/TopBar";
+import { Sidebar } from "./components/Sidebar";
+import { HeroMap } from "./components/HeroMap";
+import { ReliabilityStatus } from "./components/ReliabilityStatus";
+import { ReliabilityTrajectory } from "./components/ReliabilityTrajectory";
+import { WhyReliabilityLow } from "./components/WhyReliabilityLow";
+import { AtmosphericContext } from "./components/AtmosphericContext";
+import { HistoricalMatches } from "./components/HistoricalMatches";
+import { EnsembleOutlook } from "./components/EnsembleOutlook";
+import { ForecastVsObserved } from "./components/ForecastVsObserved";
+import { DataEvidenceStatus } from "./components/DataEvidenceStatus";
+import { Footer } from "./components/Footer";
 
-interface HealthStatus {
-  status: string;
-  service: string;
-  version: string;
-  environment: string;
-}
+// 16 Dedicated Analytical Views
+import { ActiveAlertsView } from "./components/views/ActiveAlertsView";
+import { ForecastCasesView } from "./components/views/ForecastCasesView";
+import { ReliabilityMapView } from "./components/views/ReliabilityMapView";
+import { ForecastExplorerView } from "./components/views/ForecastExplorerView";
+import { EnsembleAnalysisView } from "./components/views/EnsembleAnalysisView";
+import { AtmosphericFieldsView } from "./components/views/AtmosphericFieldsView";
+import { MultiModelComparisonView } from "./components/views/MultiModelComparisonView";
+import { VerificationView } from "./components/views/VerificationView";
+import { ForecastVsRealityView } from "./components/views/ForecastVsRealityView";
+import { FailureFingerprintView } from "./components/views/FailureFingerprintView";
+import { HistoricalAnaloguesView } from "./components/views/HistoricalAnaloguesView";
+import { BustAtlasView } from "./components/views/BustAtlasView";
+import { CalibrationView } from "./components/views/CalibrationView";
+import { AblationsView } from "./components/views/AblationsView";
+import { EvidenceDataView } from "./components/views/EvidenceDataView";
+import { StatisticsView } from "./components/views/StatisticsView";
 
-type ConnectionState = "connected" | "connecting" | "disconnected";
+import { DEMO_DASHBOARD_STATE, OPERATIONAL_LIVE_STATE } from "./data/operationalData";
+import { buildCycloneDashboardState, STORMS_CATALOG } from "./data/casesData";
+import { DashboardState } from "./types/dashboard";
 
 export const App: React.FC = () => {
-  const [health, setHealth] = useState<HealthStatus | null>(null);
-  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
-  const [latencyMs, setLatencyMs] = useState<number | null>(null);
-  const [lastChecked, setLastChecked] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Operational mode: 0 = Historical Replay, 1 = Scenario Demo, 2 = Live Inference
+  const [modeIndex, setModeIndex] = useState<number>(0);
 
-  const checkHealth = useCallback(async () => {
-    setConnectionState("connecting");
-    setErrorMessage(null);
-    const startTime = performance.now();
+  // Active case state
+  const [activeStorm, setActiveStorm] = useState<string>("MIDHILI");
+  const [activeCycle, setActiveCycle] = useState<string>("MIDHILI_00Z");
+  const [isObservationRevealed, setIsObservationRevealed] = useState<boolean>(false);
 
+  // Initial dashboard state is MIDHILI with ground truth withheld
+  const [dashboardState, setDashboardState] = useState<DashboardState>(() =>
+    buildCycloneDashboardState("MIDHILI", "MIDHILI_00Z", "+24h", false)
+  );
+
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [backendOnline, setBackendOnline] = useState<boolean>(false);
+
+  // Probe backend health API
+  const probeBackend = useCallback(async () => {
     try {
-      // Determine API URL: Vite proxy handles /api, or fallback to direct origin
-      const apiUrl = "/api/v1/health";
-      const response = await fetch(apiUrl, {
-        headers: { Accept: "application/json" },
-      });
-
-      const elapsed = Math.round(performance.now() - startTime);
-      setLatencyMs(elapsed);
-
-      if (response.ok) {
-        const data: HealthStatus = await response.json();
-        setHealth(data);
-        setConnectionState("connected");
-        setLastChecked(new Date().toLocaleTimeString());
-      } else {
-        setConnectionState("disconnected");
-        setErrorMessage(`HTTP Error: ${response.status} ${response.statusText}`);
-        setLastChecked(new Date().toLocaleTimeString());
+      const res = await fetch("/api/v1/health");
+      if (res.ok) {
+        setBackendOnline(true);
       }
-    } catch (err: unknown) {
-      const elapsed = Math.round(performance.now() - startTime);
-      setLatencyMs(elapsed);
-      setConnectionState("disconnected");
-      const message = err instanceof Error ? err.message : "Failed to connect to backend";
-      setErrorMessage(message);
-      setLastChecked(new Date().toLocaleTimeString());
+    } catch {
+      setBackendOnline(false);
     }
   }, []);
 
   useEffect(() => {
-    checkHealth();
-    const timer = setInterval(checkHealth, 15000);
-    return () => clearInterval(timer);
-  }, [checkHealth]);
+    probeBackend();
+    const interval = setInterval(probeBackend, 30000);
+    return () => clearInterval(interval);
+  }, [probeBackend]);
+
+  // Mode cycle toggle (Historical Replay <-> Scenario Demo <-> Live Inference)
+  const handleToggleDemoMode = () => {
+    const nextIndex = (modeIndex + 1) % 3;
+    setModeIndex(nextIndex);
+    if (nextIndex === 0) {
+      setDashboardState(buildCycloneDashboardState(activeStorm, activeCycle, dashboardState.selectedLead || "+24h", isObservationRevealed));
+    } else if (nextIndex === 1) {
+      setDashboardState(DEMO_DASHBOARD_STATE);
+    } else {
+      setDashboardState(OPERATIONAL_LIVE_STATE);
+    }
+  };
+
+  // Storm selection handler
+  const handleSelectStorm = (stormName: string, cycleLabel?: string) => {
+    const storm = STORMS_CATALOG.find((s) => s.name.toUpperCase() === stormName.toUpperCase()) || STORMS_CATALOG[0];
+    const targetCycle = cycleLabel || storm.defaultCycle;
+    setActiveStorm(storm.name);
+    setActiveCycle(targetCycle);
+
+    if (modeIndex === 0) {
+      const newState = buildCycloneDashboardState(
+        storm.name,
+        targetCycle,
+        dashboardState.selectedLead || "+24h",
+        isObservationRevealed
+      );
+      setDashboardState(newState);
+    }
+  };
+
+  // Lead time selection handler
+  const handleSelectLead = (lead: string) => {
+    if (modeIndex === 0) {
+      const newState = buildCycloneDashboardState(
+        activeStorm,
+        activeCycle,
+        lead,
+        isObservationRevealed
+      );
+      setDashboardState(newState);
+    } else {
+      setDashboardState((prev) => ({
+        ...prev,
+        selectedLead: lead,
+        cycle: {
+          ...prev.cycle,
+          targetLead: lead,
+        },
+      }));
+    }
+  };
+
+  // Observation progressive reveal handler
+  const handleToggleObservationReveal = () => {
+    const nextRevealed = !isObservationRevealed;
+    setIsObservationRevealed(nextRevealed);
+    if (modeIndex === 0) {
+      const newState = buildCycloneDashboardState(
+        activeStorm,
+        activeCycle,
+        dashboardState.selectedLead || "+24h",
+        nextRevealed
+      );
+      setDashboardState(newState);
+    } else {
+      setDashboardState((prev) => ({
+        ...prev,
+        isObservationRevealed: nextRevealed,
+      }));
+    }
+  };
+
+  const handleSelectVariable = (variable: string) => {
+    setDashboardState((prev) => ({ ...prev, selectedVariable: variable }));
+  };
+
+  const handleSelectView = (view: string) => {
+    setDashboardState((prev) => ({ ...prev, selectedView: view }));
+  };
+
+  // Smooth scroll to explanation panel
+  const handleInvestigateClick = () => {
+    const el = document.getElementById("why-reliability-low");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("highlight-panel-pulse");
+      setTimeout(() => el.classList.remove("highlight-panel-pulse"), 2000);
+    }
+  };
+
+  // Render appropriate sidebar sub-view
+  const renderActiveView = () => {
+    switch (activeTab) {
+      // MONITOR
+      case "alerts":
+        return (
+          <ActiveAlertsView
+            state={dashboardState}
+            onSelectStorm={handleSelectStorm}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "cases":
+        return (
+          <ForecastCasesView
+            state={dashboardState}
+            onSelectStorm={handleSelectStorm}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "map":
+        return (
+          <ReliabilityMapView
+            state={dashboardState}
+            onSelectLead={handleSelectLead}
+            onSelectStorm={handleSelectStorm}
+            onToggleObservationReveal={handleToggleObservationReveal}
+            onNavigateTab={setActiveTab}
+          />
+        );
+
+      // INVESTIGATE
+      case "explorer":
+        return (
+          <ForecastExplorerView
+            state={dashboardState}
+            onSelectLead={handleSelectLead}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "ensemble":
+        return (
+          <EnsembleAnalysisView
+            state={dashboardState}
+            onSelectLead={handleSelectLead}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "fields":
+        return (
+          <AtmosphericFieldsView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "multimodel":
+        return (
+          <MultiModelComparisonView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+
+      // VERIFY
+      case "verify":
+        return (
+          <VerificationView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "forecast_vs_reality":
+        return (
+          <ForecastVsRealityView
+            state={dashboardState}
+            onSelectLead={handleSelectLead}
+            onSelectStorm={handleSelectStorm}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "fingerprint":
+        return (
+          <FailureFingerprintView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+            onSelectStorm={handleSelectStorm}
+          />
+        );
+
+      // MEMORY
+      case "analogues":
+        return (
+          <HistoricalAnaloguesView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+            onSelectStorm={handleSelectStorm}
+          />
+        );
+      case "atlas":
+        return (
+          <BustAtlasView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+            onSelectStorm={handleSelectStorm}
+            onSelectLead={handleSelectLead}
+          />
+        );
+
+      // RESEARCH
+      case "calibration":
+        return (
+          <CalibrationView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "ablations":
+        return (
+          <AblationsView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "evidence":
+        return (
+          <EvidenceDataView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+      case "statistics":
+        return (
+          <StatisticsView
+            state={dashboardState}
+            onNavigateTab={setActiveTab}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <div className="brand-wrapper">
-          <div className="brand-logo" aria-label="ForecastGuard Logo">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <div className="brand-info">
-            <h1>ForecastGuard</h1>
-            <span>Forecast Reliability Intelligence</span>
-          </div>
-        </div>
+    <div className="forecastguard-app">
+      {/* Top Operational Strip */}
+      <TopBar state={dashboardState} onToggleDemoMode={handleToggleDemoMode} backendOnline={backendOnline} />
 
-        <div className="header-status">
-          <div className={`status-chip ${connectionState}`}>
-            <span className="pulse-dot" />
-            <span>Backend: {connectionState}</span>
-          </div>
-        </div>
-      </header>
+      {/* Main Body: Sidebar + Command Grid / Analytical Views */}
+      <div className="app-body-layout">
+        <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-      {/* Main Content Area */}
-      <main className="main-content">
-        {/* Milestone Foundation Notice */}
-        <section className="operational-banner">
-          <h2>Milestone Foundation — Operational Health Monitor</h2>
-          <p>
-            ForecastGuard foundation is active. This operational shell monitors backend API availability
-            and service readiness. In accordance with <code>AGENTS.md</code> and <code>ARCHITECTURE.md</code>,
-            no machine learning models, bust predictions, or fabricated weather data are loaded.
-          </p>
-        </section>
-
-        {/* Status and Diagnostics Cards Grid */}
-        <div className="cards-grid">
-          {/* Health Details Card */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Backend Service Health</span>
-              <span className="card-badge">GET /api/v1/health</span>
+        {activeTab === "dashboard" ? (
+          <main className="main-command-center">
+            {/* Row 1: Hero Map (58%) + Reliability Status (42%) */}
+            <div className="grid-row-hero">
+              <HeroMap
+                state={dashboardState}
+                onSelectLead={handleSelectLead}
+                onSelectVariable={handleSelectVariable}
+                onSelectView={handleSelectView}
+              />
+              <ReliabilityStatus
+                state={dashboardState}
+                onInvestigateClick={handleInvestigateClick}
+                onToggleObservationReveal={handleToggleObservationReveal}
+                onSelectStorm={handleSelectStorm}
+                onAssessReliability={handleInvestigateClick}
+              />
             </div>
 
-            <div className="metric-row">
-              <span className="metric-label">Connection Status</span>
-              <span className="metric-value">
-                {connectionState === "connected" && (
-                  <span style={{ color: "var(--semantic-stable)" }}>ONLINE (200 OK)</span>
-                )}
-                {connectionState === "connecting" && (
-                  <span style={{ color: "var(--semantic-watch)" }}>CHECKING...</span>
-                )}
-                {connectionState === "disconnected" && (
-                  <span style={{ color: "var(--semantic-high-risk)" }}>OFFLINE</span>
-                )}
-              </span>
+            {/* Row 2: Reliability Trajectory (38%) + Why Low (32%) + Atmospheric Context (30%) */}
+            <div className="grid-row-middle">
+              <ReliabilityTrajectory
+                state={dashboardState}
+                onSelectLead={handleSelectLead}
+              />
+              <WhyReliabilityLow state={dashboardState} />
+              <AtmosphericContext state={dashboardState} />
             </div>
 
-            <div className="metric-row">
-              <span className="metric-label">Service Identifier</span>
-              <span className="metric-value code">
-                {health?.service || "N/A"}
-              </span>
+            {/* Row 3: Four Equal Bottom Analytical Cards */}
+            <div className="grid-row-bottom">
+              <HistoricalMatches state={dashboardState} />
+              <EnsembleOutlook state={dashboardState} />
+              <ForecastVsObserved state={dashboardState} />
+              <DataEvidenceStatus state={dashboardState} />
             </div>
+          </main>
+        ) : (
+          <main className="main-command-center sub-view-container">
+            {renderActiveView()}
+          </main>
+        )}
+      </div>
 
-            <div className="metric-row">
-              <span className="metric-label">API Version</span>
-              <span className="metric-value code">
-                {health?.version ? `v${health.version}` : "N/A"}
-              </span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Environment</span>
-              <span className="metric-value code">
-                {health?.environment || "N/A"}
-              </span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Round-trip Latency</span>
-              <span className="metric-value">
-                {latencyMs !== null ? `${latencyMs} ms` : "—"}
-              </span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Last Checked</span>
-              <span className="metric-value">
-                {lastChecked || "—"}
-              </span>
-            </div>
-
-            {errorMessage && (
-              <div style={{ marginTop: "1rem", color: "var(--semantic-high-risk)", fontSize: "0.8rem" }}>
-                Error: {errorMessage}
-              </div>
-            )}
-
-            <div className="controls-bar">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={checkHealth}
-                disabled={connectionState === "connecting"}
-              >
-                {connectionState === "connecting" ? "Checking..." : "Refresh Health Check"}
-              </button>
-            </div>
-          </div>
-
-          {/* Raw Payload Card */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Live API Response Contract</span>
-              <span className="card-badge">application/json</span>
-            </div>
-
-            <pre className="code-block">
-              {health
-                ? JSON.stringify(health, null, 2)
-                : connectionState === "connecting"
-                ? "{\n  \"status\": \"requesting...\"\n}"
-                : "{\n  \"error\": \"Endpoint unreachable\"\n}"}
-            </pre>
-
-            <div style={{ marginTop: "1rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-              Endpoint verifies API runtime without returning premature scientific or simulated forecast state.
-            </div>
-          </div>
-
-          {/* System Specification Reference Card */}
-          <div className="card">
-            <div className="card-header">
-              <span className="card-title">Architectural Principles</span>
-              <span className="card-badge">CONSTITUTION</span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Data Integrity</span>
-              <span className="metric-value" style={{ color: "var(--semantic-stable)" }}>
-                Zero Fabricated Data
-              </span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Information Flow</span>
-              <span className="metric-value">No Future Leakage</span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Complexity Rule</span>
-              <span className="metric-value">Earned by Validation</span>
-            </div>
-
-            <div className="metric-row">
-              <span className="metric-label">Next Milestone</span>
-              <span className="metric-value" style={{ color: "var(--accent-amber)" }}>
-                M1 — Real Data Ingestion
-              </span>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="app-footer">
-        <div>ForecastGuard — Decision-Support Intelligence for Numerical Weather Prediction</div>
-        <div>SIH2026 Problem Statement SIH26079</div>
-      </footer>
+      {/* Operational Footer */}
+      <Footer />
     </div>
   );
 };

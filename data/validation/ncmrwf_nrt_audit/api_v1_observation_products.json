@@ -1,0 +1,122 @@
+[
+  {
+    "id": 20,
+    "product_name": "rainfall",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "rainfall",
+    "type": null,
+    "category": "observation-monitoring-rainfall",
+    "product_header": "observation-monitoring",
+    "product_sub_header": null,
+    "product_sub_header_item": null
+  },
+  {
+    "id": 21,
+    "product_name": "radar",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "radar",
+    "type": null,
+    "category": "observation-monitoring-radar",
+    "product_header": "observation-monitoring",
+    "product_sub_header": null,
+    "product_sub_header_item": null
+  },
+  {
+    "id": 22,
+    "product_name": "max-temp",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "temperature-max",
+    "type": null,
+    "category": "observation-monitoring-max-temperature",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "temperature",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 23,
+    "product_name": "max-temp-tendency",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "temperature-max-tendency",
+    "type": null,
+    "category": "observation-monitoring-max-temperature-tendency",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "temperature",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 24,
+    "product_name": "min-temp",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "temperature-min",
+    "type": null,
+    "category": "observation-monitoring-min-temperature",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "temperature",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 25,
+    "product_name": "min-temp-tendency",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "temperature-min-tendency",
+    "type": null,
+    "category": "observation-monitoring-min-temperature-tendency",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "temperature",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 26,
+    "product_name": "NRT-1hour-rainfall",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "NRT-1hour-rainfall",
+    "type": null,
+    "category": "observation-monitoring-nrt-1hr-rainfall",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "NRT",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 27,
+    "product_name": "NRT-3hour-rainfall",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "NRT-3hour-rainfall",
+    "type": null,
+    "category": "observation-monitoring-nrt-3hr-rainfall",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "NRT",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 28,
+    "product_name": "NRT-6hour-rainfall",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "NRT-6hour-rainfall",
+    "type": null,
+    "category": "observation-monitoring-nrt-6hr-rainfall",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "NRT",
+    "product_sub_header_item": null
+  },
+  {
+    "id": 29,
+    "product_name": "Monitoring Reports",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "rainfall-forecast",
+    "type": null,
+    "category": "observation-reports",
+    "product_header": "observation-monitoring",
+    "product_sub_header": null,
+    "product_sub_header_item": null
+  }
+]

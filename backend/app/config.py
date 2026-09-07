@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     environment: str = "development"
     service_name: str = "ForecastGuard API"
-    version: str = "0.1.0"
+    version: str = "1.0.0"
     api_v1_prefix: str = "/api/v1"
     cors_origins: Union[List[str], str] = [
         "http://localhost:5173",

@@ -1,0 +1,68 @@
+{
+  "milestone": "P1 - Real Data Foundation + First Exact Validation Case Investigation",
+  "evaluation_timestamp_utc": "2026-09-07T04:55:00Z",
+  "result": "BLOCKED",
+  "blocking_summary": {
+    "primary_blocker": "Authoritative temporal boundary mismatch for gridded rainfall (00Z->24Z vs 03Z->03Z) and institutional access controls / paid procurement for historical station observations (IMD DSP / Bharatkosh).",
+    "missing_source_access": "Unauthenticated, programmatic historical IMD SYNOP/surface observation archive for pre-2026 forecast cycles.",
+    "scientific_honesty_commitment": "ForecastGuard strictly refuses to match the 00Z->24Z NCMRWF TIGGE rainfall step with the 03Z->03Z IMD observation window, refuses to fabricate synthetic observations, and refuses to bypass governmental licensing/paywalls."
+  },
+  "investigated_sources": {
+    "1_imd_synop_surface_observations": {
+      "authority": "IMD National Data Centre (NDC) Pune (dsp.imdpune.gov.in / cdsp.imdpune.gov.in)",
+      "finding": "Historical station-level SYNOP observations require formal user registration, government identity verification, Certificate of Undertaking, and paid procurement via Bharatkosh (NTRP) portal. No public unauthenticated download API exists.",
+      "status": "ACCESS_CONTROLLED_PAID_PROCUREMENT"
+    },
+    "2_imd_wis2box": {
+      "authority": "Official WMO WIS 2.0 Node, IMD (https://wis2box.imd.gov.in)",
+      "collection": "urn:wmo:md:in-imd:surface-based-observations.synop",
+      "station_count": 432,
+      "observations_indexed": 2726944,
+      "retrieval_status": "PUBLICLY_ACCESSIBLE_VERIFIED",
+      "temporal_retention": "Operational rolling buffer (~3-4 months: June 2026 to September 2026). Pre-2026 historical archives (2024, 2025) return 0 features.",
+      "tigge_overlap": "NCMRWF TIGGE on ECMWF MARS returns MarsNoDataError for 2026 cycles."
+    },
+    "3_imd_gridded_daily_rainfall_2024": {
+      "authority": "IMD Climate Research & Services, Pune (imdpune.gov.in/cmpg/Griddata/rainfall.php)",
+      "file": "ind2024_rfp25.grd",
+      "retrieval_status": "DOWNLOADED_AND_VERIFIED",
+      "grid": "0.25 x 0.25 degree (135 lats x 129 lons)",
+      "temporal_window": "03:00 UTC (day D-1) to 03:00 UTC (day D) [08:30 IST to 08:30 IST]",
+      "tigge_compatibility": "INCOMPATIBLE. NCMRWF TIGGE forecast steps are 6-hourly (00Z, 06Z, 12Z, 18Z, 24Z). Steps +3h and +27h do not exist. 3-hour temporal offset violates Non-Negotiable Rule 7."
+    },
+    "4_imd_gridded_daily_temperature_2024": {
+      "authority": "IMD Pune (Max_1_Bin.html / Min_1_Bin.html)",
+      "finding": "Provides daily extremes (Tmax, Tmin) rather than instantaneous 2m temperature at forecast valid UTC.",
+      "status": "SEMANTIC_MISMATCH"
+    }
+  },
+  "verified_retrievals": {
+    "ncmrwf_tigge_forecast": {
+      "source": "ECDS / ECMWF MARS (dataset: tigge-forecasts, class: ti, origin: dems)",
+      "cycle": "2024-09-01 00:00:00 UTC",
+      "step_hours": 24,
+      "valid_time": "2024-09-02 00:00:00 UTC",
+      "variable": "2t (2 metre temperature)",
+      "units": "K",
+      "file": "tigge_dems_2t_20240901_00_step024.grib"
+    }
+  },
+  "artifacts_manifest": {
+    "tigge_dems_2t_20240901_00_step024.grib": {
+      "size_bytes": 28070,
+      "sha256": "f9efeec0e467de24a3f86c8df3e9cfe39587f188486ab84fadefb002f5e1ca7f"
+    },
+    "ind2024_rfp25.grd": {
+      "size_bytes": 25495560,
+      "sha256": "09d3c89a084f13f3ec534170ce9d98fafc6ff8c29b87d1c83cc2fcd82b495601"
+    },
+    "wis2box_stations_catalog.json": {
+      "size_bytes": 497605,
+      "sha256": "fbfddc119ac9bff931f0bfb3f572a23f39eb82783a555e1e112fcd1e2c5b5c5b"
+    },
+    "wis2box_synop_sample_20260901.json": {
+      "size_bytes": 33962,
+      "sha256": "1018be32b316434187509639482a4ff601acf893dd2313f69786ef992ba859bd"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "cyclone_name": "MOCHA",
+    "cycle_init_iso": "2023-05-10T00:00:00+00:00",
+    "lead_hours": 6,
+    "valid_time_iso": "2023-05-10T06:00:00+00:00",
+    "track_error_km": 107.18957836072599,
+    "bust_severity": "DEGRADED",
+    "ensemble_spread_km": 113.33487358049189,
+    "anisotropy_ratio": 1.9694898085859978,
+    "bimodality_coefficient": 0.16774961068399394,
+    "trajectory_speed_kmh": 0.0,
+    "heading_curvature_deg": 0.0,
+    "confidence_quadrant": "RELIABLE_CONFIDENCE",
+    "prospective_alert_prob": 0.0,
+    "advance_warning_hours": null,
+    "verification_provenance": "Official IMD RSMC Best Track vs NCMRWF NEPS"
+  },
+  {
+    "cyclone_name": "BIPARJOY",
+    "cycle_init_iso": "2023-06-07T00:00:00+00:00",
+    "lead_hours": 6,
+    "valid_time_iso": "2023-06-07T06:00:00+00:00",
+    "track_error_km": 116.48999715098839,
+    "bust_severity": "DEGRADED",
+    "ensemble_spread_km": 56.62262076714233,
+    "anisotropy_ratio": 1.7603921476093993,
+    "bimodality_coefficient": 0.4280123382850338,
+    "trajectory_speed_kmh": 0.0,
+    "heading_curvature_deg": 0.0,
+    "confidence_quadrant": "RELIABLE_CONFIDENCE",
+    "prospective_alert_prob": 0.0,
+    "advance_warning_hours": null,
+    "verification_provenance": "Official IMD RSMC Best Track vs NCMRWF NEPS"
+  }
+]

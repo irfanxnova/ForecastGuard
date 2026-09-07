@@ -1,0 +1,1068 @@
+{
+  "cyclone_name": "MOCHA",
+  "year": 2023,
+  "initialization_time_iso": "2023-05-10T00:00:00+00:00",
+  "verification_status": "VERIFIED_EXACT_TIMESTAMPS",
+  "provenance": {
+    "ncmrwf_source": {
+      "dataset": "tigge-forecasts",
+      "origin": "dems",
+      "ensemble_members": 11,
+      "native_variable": "Mean sea level pressure (msl)",
+      "units": "Pa",
+      "center_detection": "Local MSLP minimum with vortex tracking continuity (radius 5.0 deg)"
+    },
+    "imd_source": {
+      "organization": "Regional Specialized Meteorological Centre (RSMC) New Delhi / IMD",
+      "product": "Official Best Tracks Data (1982-2026)",
+      "temporal_resolution": "6-hourly synoptic fixes (00, 06, 12, 18 UTC)",
+      "coordinate_system": "WGS84 degrees latitude / longitude"
+    },
+    "temporal_alignment": "Exact 6-hourly match (forecast_valid_time == best_track_valid_time)",
+    "spatial_error_metric": "Great-circle distance (Haversine formula, Earth radius 6371.0 km)",
+    "bust_definition": "Continuous track error exceeding domain degradation threshold (90.0 km base)"
+  },
+  "continuous_error_summary": {
+    "count": 8,
+    "mae_km": 96.34583503382382,
+    "rmse_km": 97.71918935009863,
+    "median_error_km": 97.85489626185549,
+    "percentile_75_km": 107.84436639512683,
+    "percentile_90_km": 112.34920120914536,
+    "min_error_km": 61.343095668624564,
+    "max_error_km": 118.27696620104938
+  },
+  "models_evaluated": {
+    "A_Climatology": {
+      "model_name": "A_Climatology",
+      "brier_score": 0.109375,
+      "roc_auc": 0.5,
+      "pr_auc": 0.125,
+      "ece": 0.0,
+      "accuracy": 0.875,
+      "f1": 0.0,
+      "earliest_warning_lead_hours": null,
+      "probabilities": [
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.125
+      ],
+      "predictions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "B_SpreadOnly": {
+      "model_name": "B_SpreadOnly",
+      "brier_score": 0.0012545836554091327,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "ece": 0.017764990532303307,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "earliest_warning_lead_hours": 6,
+      "probabilities": [
+        0.9298946602368918,
+        0.07156613576759635,
+        0.00044585267070695644,
+        2.581083595122274e-06,
+        1.4885059935714661e-08,
+        8.784379034502027e-11,
+        5.131131816302359e-13,
+        3.0192409008858036e-15
+      ],
+      "predictions": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "C_TrajectoryEnhanced": {
+      "model_name": "C_TrajectoryEnhanced",
+      "brier_score": 0.0005594742257355858,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "ece": 0.011935204613839363,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "earliest_warning_lead_hours": 6,
+      "probabilities": [
+        0.9524860407066378,
+        0.047090155472428195,
+        0.0008569351140386201,
+        1.9938515613360677e-05,
+        6.337711138076311e-07,
+        1.4249633956048115e-08,
+        4.387651997170966e-10,
+        5.575953708286869e-11
+      ],
+      "predictions": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "D_DecisionTree": {
+      "model_name": "D_DecisionTree",
+      "brier_score": 0.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "ece": 0.0,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "earliest_warning_lead_hours": 6,
+      "probabilities": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "leads": [
+    {
+      "lead_hours": 6,
+      "valid_time_iso": "2023-05-10T06:00:00+00:00",
+      "best_track": {
+        "latitude": 9.1,
+        "longitude": 88.7,
+        "central_pressure_hpa": 999.0,
+        "max_sustained_wind_kt": 30.0
+      },
+      "ensemble_mean": {
+        "latitude": 9.741818181818182,
+        "longitude": 87.9709090909091,
+        "central_pressure_hpa": 1001.1119793146306
+      },
+      "ensemble_median": {
+        "latitude": 9.719999999999999,
+        "longitude": 88.2
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 11.16,
+          "longitude": 88.38000000000001,
+          "central_pressure_hpa": 1003.073798828125,
+          "track_error_km": 231.72394647949764
+        },
+        {
+          "member": 2,
+          "latitude": 10.2,
+          "longitude": 86.76,
+          "central_pressure_hpa": 1000.723798828125,
+          "track_error_km": 245.3281827421765
+        },
+        {
+          "member": 3,
+          "latitude": 9.959999999999999,
+          "longitude": 88.74000000000001,
+          "central_pressure_hpa": 1001.058203125,
+          "track_error_km": 95.72818378639946
+        },
+        {
+          "member": 4,
+          "latitude": 9.6,
+          "longitude": 88.2,
+          "central_pressure_hpa": 1002.65181640625,
+          "track_error_km": 78.10599289930455
+        },
+        {
+          "member": 5,
+          "latitude": 9.719999999999999,
+          "longitude": 88.38000000000001,
+          "central_pressure_hpa": 997.11181640625,
+          "track_error_km": 77.36335539172885
+        },
+        {
+          "member": 6,
+          "latitude": 9.719999999999999,
+          "longitude": 87.66,
+          "central_pressure_hpa": 1003.3496728515624,
+          "track_error_km": 133.2983317761501
+        },
+        {
+          "member": 7,
+          "latitude": 9.12,
+          "longitude": 86.94,
+          "central_pressure_hpa": 1001.342705078125,
+          "track_error_km": 193.24711440796997
+        },
+        {
+          "member": 8,
+          "latitude": 9.36,
+          "longitude": 87.48,
+          "central_pressure_hpa": 1000.201142578125,
+          "track_error_km": 136.98669142198938
+        },
+        {
+          "member": 9,
+          "latitude": 9.959999999999999,
+          "longitude": 89.64,
+          "central_pressure_hpa": 1002.592822265625,
+          "track_error_km": 140.60602764157028
+        },
+        {
+          "member": 10,
+          "latitude": 9.36,
+          "longitude": 89.28,
+          "central_pressure_hpa": 1002.657373046875,
+          "track_error_km": 69.9154033752959
+        },
+        {
+          "member": 11,
+          "latitude": 9.0,
+          "longitude": 86.22,
+          "central_pressure_hpa": 997.468623046875,
+          "track_error_km": 272.55691520078676
+        }
+      ],
+      "track_error": {
+        "mean_km": 107.18957836072599,
+        "median_km": 136.98669142198938,
+        "min_km": 69.9154033752959,
+        "max_km": 272.55691520078676
+      },
+      "ensemble_dynamics": {
+        "spread_km": 113.33487358049189,
+        "divergence_km": 389.98090635550494
+      },
+      "verification": {
+        "is_bust": true,
+        "bust_severity": "DEGRADED",
+        "bust_threshold_km": 94.32000000000001
+      }
+    },
+    {
+      "lead_hours": 12,
+      "valid_time_iso": "2023-05-10T12:00:00+00:00",
+      "best_track": {
+        "latitude": 10.0,
+        "longitude": 88.4,
+        "central_pressure_hpa": 998.0,
+        "max_sustained_wind_kt": 30.0
+      },
+      "ensemble_mean": {
+        "latitude": 10.014545454545454,
+        "longitude": 87.84000000000002,
+        "central_pressure_hpa": 997.687237215909
+      },
+      "ensemble_median": {
+        "latitude": 9.84,
+        "longitude": 87.66
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 11.52,
+          "longitude": 87.66,
+          "central_pressure_hpa": 999.94486328125,
+          "track_error_km": 187.35202386319946
+        },
+        {
+          "member": 2,
+          "latitude": 9.84,
+          "longitude": 86.4,
+          "central_pressure_hpa": 999.49556640625,
+          "track_error_km": 219.7858133695991
+        },
+        {
+          "member": 3,
+          "latitude": 9.84,
+          "longitude": 88.56,
+          "central_pressure_hpa": 995.75142578125,
+          "track_error_km": 24.97315908659245
+        },
+        {
+          "member": 4,
+          "latitude": 10.44,
+          "longitude": 88.38000000000001,
+          "central_pressure_hpa": 998.438935546875,
+          "track_error_km": 48.97469500518589
+        },
+        {
+          "member": 5,
+          "latitude": 9.84,
+          "longitude": 87.66,
+          "central_pressure_hpa": 992.925,
+          "track_error_km": 82.98358598428818
+        },
+        {
+          "member": 6,
+          "latitude": 10.2,
+          "longitude": 87.48,
+          "central_pressure_hpa": 1000.5314453125,
+          "track_error_km": 103.14004043888174
+        },
+        {
+          "member": 7,
+          "latitude": 9.719999999999999,
+          "longitude": 87.48,
+          "central_pressure_hpa": 996.25947265625,
+          "track_error_km": 105.4874928502576
+        },
+        {
+          "member": 8,
+          "latitude": 9.84,
+          "longitude": 87.48,
+          "central_pressure_hpa": 997.264736328125,
+          "track_error_km": 102.32830303575197
+        },
+        {
+          "member": 9,
+          "latitude": 9.959999999999999,
+          "longitude": 89.46000000000001,
+          "central_pressure_hpa": 999.943857421875,
+          "track_error_km": 116.16822733833108
+        },
+        {
+          "member": 10,
+          "latitude": 10.32,
+          "longitude": 89.46000000000001,
+          "central_pressure_hpa": 1000.7435546875,
+          "track_error_km": 121.3520250681803
+        },
+        {
+          "member": 11,
+          "latitude": 8.64,
+          "longitude": 86.22,
+          "central_pressure_hpa": 993.260751953125,
+          "track_error_km": 282.992904431634
+        }
+      ],
+      "track_error": {
+        "mean_km": 61.343095668624564,
+        "median_km": 105.4874928502576,
+        "min_km": 24.97315908659245,
+        "max_km": 282.992904431634
+      },
+      "ensemble_dynamics": {
+        "spread_km": 113.1087401930929,
+        "divergence_km": 401.4485338560806
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "NORMAL",
+        "bust_threshold_km": 98.64000000000001
+      }
+    },
+    {
+      "lead_hours": 18,
+      "valid_time_iso": "2023-05-10T18:00:00+00:00",
+      "best_track": {
+        "latitude": 10.8,
+        "longitude": 88.2,
+        "central_pressure_hpa": 998.0,
+        "max_sustained_wind_kt": 30.0
+      },
+      "ensemble_mean": {
+        "latitude": 10.276363636363635,
+        "longitude": 87.54545454545455,
+        "central_pressure_hpa": 997.9296670809658
+      },
+      "ensemble_median": {
+        "latitude": 10.2,
+        "longitude": 87.48
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 11.52,
+          "longitude": 86.58,
+          "central_pressure_hpa": 1000.718671875,
+          "track_error_km": 194.01659924353314
+        },
+        {
+          "member": 2,
+          "latitude": 9.719999999999999,
+          "longitude": 86.76,
+          "central_pressure_hpa": 999.1915234375,
+          "track_error_km": 198.1063703419778
+        },
+        {
+          "member": 3,
+          "latitude": 10.32,
+          "longitude": 88.02000000000001,
+          "central_pressure_hpa": 994.231435546875,
+          "track_error_km": 56.88483008568899
+        },
+        {
+          "member": 4,
+          "latitude": 10.92,
+          "longitude": 87.84,
+          "central_pressure_hpa": 999.226474609375,
+          "track_error_km": 41.515986278036465
+        },
+        {
+          "member": 5,
+          "latitude": 9.84,
+          "longitude": 87.48,
+          "central_pressure_hpa": 991.898125,
+          "track_error_km": 132.66024436589913
+        },
+        {
+          "member": 6,
+          "latitude": 11.28,
+          "longitude": 86.94,
+          "central_pressure_hpa": 1003.601201171875,
+          "track_error_km": 147.50711780910484
+        },
+        {
+          "member": 7,
+          "latitude": 10.08,
+          "longitude": 87.66,
+          "central_pressure_hpa": 995.517822265625,
+          "track_error_km": 99.48193186899157
+        },
+        {
+          "member": 8,
+          "latitude": 10.2,
+          "longitude": 87.48,
+          "central_pressure_hpa": 997.043984375,
+          "track_error_km": 103.18857891559195
+        },
+        {
+          "member": 9,
+          "latitude": 10.68,
+          "longitude": 89.64,
+          "central_pressure_hpa": 1000.234208984375,
+          "track_error_km": 157.8805482851683
+        },
+        {
+          "member": 10,
+          "latitude": 10.08,
+          "longitude": 88.02000000000001,
+          "central_pressure_hpa": 1002.6409375,
+          "track_error_km": 82.44454638100726
+        },
+        {
+          "member": 11,
+          "latitude": 8.399999999999999,
+          "longitude": 86.58,
+          "central_pressure_hpa": 992.921953125,
+          "track_error_km": 320.5617025325717
+        }
+      ],
+      "track_error": {
+        "mean_km": 92.25098006805672,
+        "median_km": 132.66024436589913,
+        "min_km": 41.515986278036465,
+        "max_km": 320.5617025325717
+      },
+      "ensemble_dynamics": {
+        "spread_km": 104.47410588066913,
+        "divergence_km": 420.5378779432141
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "NORMAL",
+        "bust_threshold_km": 102.96000000000001
+      }
+    },
+    {
+      "lead_hours": 24,
+      "valid_time_iso": "2023-05-11T00:00:00+00:00",
+      "best_track": {
+        "latitude": 11.2,
+        "longitude": 88.1,
+        "central_pressure_hpa": 997.0,
+        "max_sustained_wind_kt": 35.0
+      },
+      "ensemble_mean": {
+        "latitude": 10.69090909090909,
+        "longitude": 87.38181818181819,
+        "central_pressure_hpa": 994.8810795454546
+      },
+      "ensemble_median": {
+        "latitude": 10.799999999999999,
+        "longitude": 87.30000000000001
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 10.92,
+          "longitude": 86.04,
+          "central_pressure_hpa": 1001.2882421875,
+          "track_error_km": 226.95220687892342
+        },
+        {
+          "member": 2,
+          "latitude": 10.44,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 996.772998046875,
+          "track_error_km": 121.55572671384778
+        },
+        {
+          "member": 3,
+          "latitude": 10.799999999999999,
+          "longitude": 87.12,
+          "central_pressure_hpa": 988.602900390625,
+          "track_error_km": 115.84722072207846
+        },
+        {
+          "member": 4,
+          "latitude": 11.52,
+          "longitude": 87.48,
+          "central_pressure_hpa": 997.169345703125,
+          "track_error_km": 76.38409230081345
+        },
+        {
+          "member": 5,
+          "latitude": 9.959999999999999,
+          "longitude": 87.48,
+          "central_pressure_hpa": 985.25423828125,
+          "track_error_km": 153.635216898645
+        },
+        {
+          "member": 6,
+          "latitude": 10.2,
+          "longitude": 86.22,
+          "central_pressure_hpa": 1002.517607421875,
+          "track_error_km": 233.5743428881859
+        },
+        {
+          "member": 7,
+          "latitude": 11.04,
+          "longitude": 87.66,
+          "central_pressure_hpa": 992.970576171875,
+          "track_error_km": 51.197813644990696
+        },
+        {
+          "member": 8,
+          "latitude": 10.799999999999999,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 995.640380859375,
+          "track_error_km": 97.9964667338249
+        },
+        {
+          "member": 9,
+          "latitude": 11.16,
+          "longitude": 89.28,
+          "central_pressure_hpa": 997.156220703125,
+          "track_error_km": 128.79676075530472
+        },
+        {
+          "member": 10,
+          "latitude": 11.4,
+          "longitude": 88.02000000000001,
+          "central_pressure_hpa": 998.9008203125,
+          "track_error_km": 23.88861083070381
+        },
+        {
+          "member": 11,
+          "latitude": 9.36,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 987.418544921875,
+          "track_error_km": 222.5332138339784
+        }
+      ],
+      "track_error": {
+        "mean_km": 96.70504381337204,
+        "median_km": 121.55572671384778,
+        "min_km": 23.88861083070381,
+        "max_km": 233.5743428881859
+      },
+      "ensemble_dynamics": {
+        "spread_km": 95.79250905746603,
+        "divergence_km": 354.6078764880364
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "NORMAL",
+        "bust_threshold_km": 107.28
+      }
+    },
+    {
+      "lead_hours": 30,
+      "valid_time_iso": "2023-05-11T06:00:00+00:00",
+      "best_track": {
+        "latitude": 11.6,
+        "longitude": 88.0,
+        "central_pressure_hpa": 996.0,
+        "max_sustained_wind_kt": 45.0
+      },
+      "ensemble_mean": {
+        "latitude": 11.16,
+        "longitude": 87.3490909090909,
+        "central_pressure_hpa": 993.4905646306819
+      },
+      "ensemble_median": {
+        "latitude": 11.16,
+        "longitude": 87.30000000000001
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 10.799999999999999,
+          "longitude": 86.76,
+          "central_pressure_hpa": 999.413662109375,
+          "track_error_km": 161.88552929708243
+        },
+        {
+          "member": 2,
+          "latitude": 11.16,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 996.77330078125,
+          "track_error_km": 90.64397868822296
+        },
+        {
+          "member": 3,
+          "latitude": 11.04,
+          "longitude": 86.94,
+          "central_pressure_hpa": 984.699833984375,
+          "track_error_km": 131.28056686635068
+        },
+        {
+          "member": 4,
+          "latitude": 11.879999999999999,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 997.441142578125,
+          "track_error_km": 82.32274232683451
+        },
+        {
+          "member": 5,
+          "latitude": 10.32,
+          "longitude": 87.66,
+          "central_pressure_hpa": 982.43572265625,
+          "track_error_km": 147.08933823655178
+        },
+        {
+          "member": 6,
+          "latitude": 10.68,
+          "longitude": 86.4,
+          "central_pressure_hpa": 1002.3550390625,
+          "track_error_km": 202.32505320747464
+        },
+        {
+          "member": 7,
+          "latitude": 12.12,
+          "longitude": 87.66,
+          "central_pressure_hpa": 992.442099609375,
+          "track_error_km": 68.64576362882313
+        },
+        {
+          "member": 8,
+          "latitude": 11.16,
+          "longitude": 87.48,
+          "central_pressure_hpa": 993.747841796875,
+          "track_error_km": 74.87894286913202
+        },
+        {
+          "member": 9,
+          "latitude": 11.76,
+          "longitude": 89.10000000000001,
+          "central_pressure_hpa": 994.650087890625,
+          "track_error_km": 121.09565773151225
+        },
+        {
+          "member": 10,
+          "latitude": 11.4,
+          "longitude": 86.94,
+          "central_pressure_hpa": 997.4509375,
+          "track_error_km": 117.62180060795833
+        },
+        {
+          "member": 11,
+          "latitude": 10.44,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 986.98654296875,
+          "track_error_km": 149.9144228259955
+        }
+      ],
+      "track_error": {
+        "mean_km": 86.18753695009354,
+        "median_km": 121.09565773151225,
+        "min_km": 68.64576362882313,
+        "max_km": 202.32505320747464
+      },
+      "ensemble_dynamics": {
+        "spread_km": 80.40984802216916,
+        "divergence_km": 318.02756774585527
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "NORMAL",
+        "bust_threshold_km": 111.6
+      }
+    },
+    {
+      "lead_hours": 36,
+      "valid_time_iso": "2023-05-11T12:00:00+00:00",
+      "best_track": {
+        "latitude": 12.2,
+        "longitude": 88.0,
+        "central_pressure_hpa": 994.0,
+        "max_sustained_wind_kt": 50.0
+      },
+      "ensemble_mean": {
+        "latitude": 11.65090909090909,
+        "longitude": 87.28363636363638,
+        "central_pressure_hpa": 988.8613041548296
+      },
+      "ensemble_median": {
+        "latitude": 11.52,
+        "longitude": 87.30000000000001
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 11.28,
+          "longitude": 86.76,
+          "central_pressure_hpa": 996.50732421875,
+          "track_error_km": 169.37818425881994
+        },
+        {
+          "member": 2,
+          "latitude": 12.0,
+          "longitude": 87.66,
+          "central_pressure_hpa": 993.844267578125,
+          "track_error_km": 43.14024981443195
+        },
+        {
+          "member": 3,
+          "latitude": 11.4,
+          "longitude": 86.22,
+          "central_pressure_hpa": 976.828974609375,
+          "track_error_km": 213.1881332600494
+        },
+        {
+          "member": 4,
+          "latitude": 12.48,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 993.622255859375,
+          "track_error_km": 82.16536883837449
+        },
+        {
+          "member": 5,
+          "latitude": 10.799999999999999,
+          "longitude": 87.84,
+          "central_pressure_hpa": 975.53875,
+          "track_error_km": 156.646031454103
+        },
+        {
+          "member": 6,
+          "latitude": 9.959999999999999,
+          "longitude": 86.04,
+          "central_pressure_hpa": 1000.808515625,
+          "track_error_km": 328.29404614476346
+        },
+        {
+          "member": 7,
+          "latitude": 12.84,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 986.10884765625,
+          "track_error_km": 104.1064376595042
+        },
+        {
+          "member": 8,
+          "latitude": 12.12,
+          "longitude": 87.66,
+          "central_pressure_hpa": 988.973115234375,
+          "track_error_km": 38.01350567022368
+        },
+        {
+          "member": 9,
+          "latitude": 12.48,
+          "longitude": 89.28,
+          "central_pressure_hpa": 990.52837890625,
+          "track_error_km": 142.48417482312567
+        },
+        {
+          "member": 10,
+          "latitude": 11.52,
+          "longitude": 86.76,
+          "central_pressure_hpa": 993.2331640625,
+          "track_error_km": 154.67815785465942
+        },
+        {
+          "member": 11,
+          "latitude": 11.28,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 981.480751953125,
+          "track_error_km": 127.56448331583253
+        }
+      ],
+      "track_error": {
+        "mean_km": 99.00474871033892,
+        "median_km": 142.48417482312567,
+        "min_km": 38.01350567022368,
+        "max_km": 328.29404614476346
+      },
+      "ensemble_dynamics": {
+        "spread_km": 110.64921546170645,
+        "divergence_km": 450.9723682186069
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "NORMAL",
+        "bust_threshold_km": 115.92
+      }
+    },
+    {
+      "lead_hours": 42,
+      "valid_time_iso": "2023-05-11T18:00:00+00:00",
+      "best_track": {
+        "latitude": 12.7,
+        "longitude": 88.1,
+        "central_pressure_hpa": 992.0,
+        "max_sustained_wind_kt": 50.0
+      },
+      "ensemble_mean": {
+        "latitude": 12.163636363636364,
+        "longitude": 87.25090909090909,
+        "central_pressure_hpa": 986.3357315340909
+      },
+      "ensemble_median": {
+        "latitude": 12.0,
+        "longitude": 87.12
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 12.0,
+          "longitude": 86.76,
+          "central_pressure_hpa": 997.606865234375,
+          "track_error_km": 165.05727457505978
+        },
+        {
+          "member": 2,
+          "latitude": 12.72,
+          "longitude": 87.48,
+          "central_pressure_hpa": 993.6675,
+          "track_error_km": 67.28828279153497
+        },
+        {
+          "member": 3,
+          "latitude": 11.76,
+          "longitude": 86.22,
+          "central_pressure_hpa": 971.721982421875,
+          "track_error_km": 229.48474590524765
+        },
+        {
+          "member": 4,
+          "latitude": 12.6,
+          "longitude": 86.94,
+          "central_pressure_hpa": 991.93498046875,
+          "track_error_km": 126.34524537640698
+        },
+        {
+          "member": 5,
+          "latitude": 11.04,
+          "longitude": 88.02000000000001,
+          "central_pressure_hpa": 968.83380859375,
+          "track_error_km": 184.78873059411876
+        },
+        {
+          "member": 6,
+          "latitude": 10.2,
+          "longitude": 86.94,
+          "central_pressure_hpa": 1001.324140625,
+          "track_error_km": 305.3782262246265
+        },
+        {
+          "member": 7,
+          "latitude": 13.44,
+          "longitude": 87.12,
+          "central_pressure_hpa": 983.3959375,
+          "track_error_km": 134.30530885622426
+        },
+        {
+          "member": 8,
+          "latitude": 13.08,
+          "longitude": 87.30000000000001,
+          "central_pressure_hpa": 985.284296875,
+          "track_error_km": 96.46104025498386
+        },
+        {
+          "member": 9,
+          "latitude": 13.2,
+          "longitude": 89.46000000000001,
+          "central_pressure_hpa": 986.884609375,
+          "track_error_km": 157.51631600952726
+        },
+        {
+          "member": 10,
+          "latitude": 12.0,
+          "longitude": 86.4,
+          "central_pressure_hpa": 992.14130859375,
+          "track_error_km": 200.38997410225886
+        },
+        {
+          "member": 11,
+          "latitude": 11.76,
+          "longitude": 87.12,
+          "central_pressure_hpa": 976.8976171875,
+          "track_error_km": 149.22002199622312
+        }
+      ],
+      "track_error": {
+        "mean_km": 109.80873049832935,
+        "median_km": 157.51631600952726,
+        "min_km": 67.28828279153497,
+        "max_km": 305.3782262246265
+      },
+      "ensemble_dynamics": {
+        "spread_km": 120.57515417014196,
+        "divergence_km": 431.91241108247107
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "MODERATE",
+        "bust_threshold_km": 120.24000000000001
+      }
+    },
+    {
+      "lead_hours": 48,
+      "valid_time_iso": "2023-05-12T00:00:00+00:00",
+      "best_track": {
+        "latitude": 13.2,
+        "longitude": 88.1,
+        "central_pressure_hpa": 982.0,
+        "max_sustained_wind_kt": 65.0
+      },
+      "ensemble_mean": {
+        "latitude": 12.512727272727272,
+        "longitude": 87.26727272727273,
+        "central_pressure_hpa": 980.1929838423295
+      },
+      "ensemble_median": {
+        "latitude": 12.36,
+        "longitude": 87.12
+      },
+      "members": [
+        {
+          "member": 1,
+          "latitude": 12.0,
+          "longitude": 86.94,
+          "central_pressure_hpa": 995.117216796875,
+          "track_error_km": 183.43832434667502
+        },
+        {
+          "member": 2,
+          "latitude": 13.2,
+          "longitude": 87.48,
+          "central_pressure_hpa": 987.648916015625,
+          "track_error_km": 67.11934443040724
+        },
+        {
+          "member": 3,
+          "latitude": 12.24,
+          "longitude": 86.04,
+          "central_pressure_hpa": 961.9224609375,
+          "track_error_km": 247.62615796460778
+        },
+        {
+          "member": 4,
+          "latitude": 13.08,
+          "longitude": 86.76,
+          "central_pressure_hpa": 985.301806640625,
+          "track_error_km": 145.71201380811866
+        },
+        {
+          "member": 5,
+          "latitude": 11.4,
+          "longitude": 88.56,
+          "central_pressure_hpa": 964.098173828125,
+          "track_error_km": 206.29515438098542
+        },
+        {
+          "member": 6,
+          "latitude": 9.6,
+          "longitude": 87.48,
+          "central_pressure_hpa": 998.90154296875,
+          "track_error_km": 405.9642194517358
+        },
+        {
+          "member": 7,
+          "latitude": 14.16,
+          "longitude": 87.12,
+          "central_pressure_hpa": 976.73109375,
+          "track_error_km": 150.35005239503948
+        },
+        {
+          "member": 8,
+          "latitude": 13.56,
+          "longitude": 86.94,
+          "central_pressure_hpa": 980.379658203125,
+          "track_error_km": 131.71489138137014
+        },
+        {
+          "member": 9,
+          "latitude": 13.8,
+          "longitude": 89.28,
+          "central_pressure_hpa": 979.79041015625,
+          "track_error_km": 143.97497866830892
+        },
+        {
+          "member": 10,
+          "latitude": 12.36,
+          "longitude": 86.22,
+          "central_pressure_hpa": 984.41103515625,
+          "track_error_km": 224.2437203146461
+        },
+        {
+          "member": 11,
+          "latitude": 12.24,
+          "longitude": 87.12,
+          "central_pressure_hpa": 967.8205078125,
+          "track_error_km": 150.6439703580832
+        }
+      ],
+      "track_error": {
+        "mean_km": 118.27696620104938,
+        "median_km": 150.6439703580832,
+        "min_km": 67.11934443040724,
+        "max_km": 405.9642194517358
+      },
+      "ensemble_dynamics": {
+        "spread_km": 145.0013047495158,
+        "divergence_km": 508.558885021337
+      },
+      "verification": {
+        "is_bust": false,
+        "bust_severity": "MODERATE",
+        "bust_threshold_km": 124.55999999999999
+      }
+    }
+  ],
+  "data_limitations": [
+    "Official IMD/RSMC best tracks are published 6-hourly; intermediate 3-hourly synoptic fixes are excluded to ensure exact 6-hourly TIGGE step parity.",
+    "TIGGE NCMRWF NEPS provides 11 perturbed ensemble members at 0.5\u00b0 spatial resolution.",
+    "Track center detected via local MSLP minimum tracking with vortex continuity constraint; intensity (10m wind) verification omitted as uncalibrated wind in TIGGE single-level."
+  ]
+}

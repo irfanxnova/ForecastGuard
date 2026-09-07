@@ -1,0 +1,66 @@
+{
+  "product_name": "NRT 6hour rainfall - observations",
+  "official_provider": "National Centre for Medium Range Weather Forecasting (NCMRWF), Ministry of Earth Sciences, Govt. of India",
+  "portal_base_url": "https://nwp.ncmrwf.gov.in",
+  "api_v1_catalog_endpoint": "https://nwp.ncmrwf.gov.in/apis/api/v1/special-products/getAllObservationProducts",
+  "api_v1_entry": {
+    "id": 28,
+    "product_name": "NRT-6hour-rainfall",
+    "utc": 0,
+    "forecast_hours": [],
+    "url_product_name": "NRT-6hour-rainfall",
+    "type": null,
+    "category": "observation-monitoring-nrt-6hr-rainfall",
+    "product_header": "observation-monitoring",
+    "product_sub_header": "NRT",
+    "product_sub_header_item": null
+  },
+  "api_v2_product_endpoint": "https://nwp.ncmrwf.gov.in/apis/api/v2/products/getProduct",
+  "api_v2_product_id": 102,
+  "api_v2_entry": {
+    "product_id": 102,
+    "product_name": "nrt-6hour-rainfall-nrt-observations",
+    "product_alias": "NRT 6hour rainfall",
+    "description": "NRT 6hour rainfall of NRT in observations",
+    "product_type": "static_links",
+    "base_url": null,
+    "base_url_rules": [],
+    "date_rule": {},
+    "params": {},
+    "static_links": [
+      "/MERA_NRT_RADAR/Animation_last_6hr.gif"
+    ],
+    "tags": [
+      "observations",
+      "observation",
+      "NRT",
+      "nrt",
+      "nrt 6hr",
+      "nrt 6hour",
+      "nrt 6",
+      "6hr"
+    ],
+    "static_redirect": false,
+    "weather_model": "observations",
+    "urls": [
+      "https://nwp.ncmrwf.gov.in/MERA_NRT_RADAR/Animation_last_6hr.gif"
+    ]
+  },
+  "data_delivery_type": "static_links",
+  "static_file_url": "https://nwp.ncmrwf.gov.in/MERA_NRT_RADAR/Animation_last_6hr.gif",
+  "file_downloaded": "Animation_last_6hr.gif",
+  "file_md5": "33766d8aa61a04bf00f50009b48c0008",
+  "file_size_bytes": 23961,
+  "investigation_timestamp_utc": "2026-09-07T04:18:00Z",
+  "findings": {
+    "historical_archive_accessible": false,
+    "historical_archive_evidence": "NCMRWF API v2 defines product_type='static_links' with base_url=None. The endpoint statically serves a single overwritten GIF file (/MERA_NRT_RADAR/Animation_last_6hr.gif). No historical calendar/file archive exists on nwp.ncmrwf.gov.in or rds.ncmrwf.gov.in for this product.",
+    "accumulation_semantics": "Undocumented / Non-accumulated. The visual product title specifies 'NRT Blended Rainfall at 00:00Z07SEP2026 (Satellite and DWR)' with colorbar units in mm/hr (instantaneous rain rate), not 6-hour accumulated depth (mm). Identical hash found for last_1hr, last_3hr, and last_6hr files.",
+    "spatial_grid_available": false,
+    "spatial_grid_evidence": "The product is exclusively distributed as a 1200x900 pixel rendered raster image. No NetCDF, GRIB, GeoTIFF, or numeric coordinate array is published.",
+    "covers_target_date_2025_09_01": false,
+    "temporal_alignment_feasible": false,
+    "result_status": "BLOCKED",
+    "blocking_reason": "Inaccessible historical observation archive, absence of numerical gridded fields, and undocumented/non-accumulated (mm/hr instantaneous) physical units."
+  }
+}
