@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.app.api.forecast import router as forecast_router
 from backend.app.api.health import router as health_router
 from backend.app.api.historical import router as historical_router
 from backend.app.api.inference import router as inference_router
@@ -54,6 +55,10 @@ def create_app() -> FastAPI:
     )
     application.include_router(
         regional_router,
+        prefix=settings.api_v1_prefix,
+    )
+    application.include_router(
+        forecast_router,
         prefix=settings.api_v1_prefix,
     )
 
