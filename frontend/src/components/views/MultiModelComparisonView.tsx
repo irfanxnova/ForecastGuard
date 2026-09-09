@@ -115,6 +115,58 @@ export const MultiModelComparisonView: React.FC<MultiModelComparisonViewProps> =
           </div>
         </div>
       </div>
+
+      {/* Decision Gate & Alignment Specifications Panel */}
+      <div
+        className="panel"
+        style={{
+          background: "rgba(10, 16, 24, 0.6)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: "6px",
+          padding: "16px 20px",
+          fontSize: "11.5px",
+          color: "#94A3B8",
+          lineHeight: 1.6,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+          <h4 style={{ color: "#E2E8F0", fontSize: "13px", margin: 0 }}>
+            Decision Gate & Alignment Contract
+          </h4>
+          <span
+            style={{
+              padding: "2px 8px",
+              background: "rgba(245, 158, 11, 0.15)",
+              color: "#F59E0B",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              borderRadius: "4px",
+              fontWeight: 600,
+              fontSize: "10.5px",
+            }}
+          >
+            DECISION GATE: INSUFFICIENT EVIDENCE
+          </span>
+        </div>
+        <p style={{ margin: "0 0 10px 0" }}>
+          Under Phase 2 Decision Gate rules, multi-model consensus scoring is blocked when fewer than 2 genuinely independent,
+          adequately aligned models are archived. ForecastGuard retains NCMRWF NEPS as its single operational baseline and refuses
+          to fabricate synthetic comparison tracks.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginTop: "12px" }}>
+          <div style={{ background: "rgba(15, 23, 42, 0.6)", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <strong style={{ color: "#CBD5E1" }}>Temporal Alignment:</strong>
+            <div>Exact 6-hourly synoptic match (&Delta;t = 0). Asynchronous runs rejected.</div>
+          </div>
+          <div style={{ background: "rgba(15, 23, 42, 0.6)", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <strong style={{ color: "#CBD5E1" }}>Agreement Bounds:</strong>
+            <div>Agreement: &le;65 km / &le;8 hPa | High Disagreement: &gt;150 km / &gt;18 hPa (Experimental).</div>
+          </div>
+          <div style={{ background: "rgba(15, 23, 42, 0.6)", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <strong style={{ color: "#CBD5E1" }}>Scientific Distinction:</strong>
+            <div>Cross-model disagreement is consensus dispersion, NEVER equated with forecast error.</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

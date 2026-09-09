@@ -23,6 +23,9 @@ from backend.app.services.model_config import (
     M1_PARAMETERS,
     M1_SPREAD_ONLY_METADATA,
 )
+from backend.app.services.novelty_service import novelty_service
+from backend.app.services.multimodel_service import multimodel_service
+from backend.app.schemas.multimodel import MultiModelEvidenceRequest
 from scientific.validation.cyclone import haversine_distance
 
 
@@ -41,7 +44,9 @@ class ProductionInferenceEngine:
         """Execute deterministic inference pipeline with data QC and fail-safe guards."""
         # 1. Fail-Safe: Validate ensemble member count
         member_count = len(req.ensemble_members)
+        insufficient_multimodel = multimodel_service.evaluate_agreement(MultiModelEvidenceRequest(models=[]))
         if member_count < 5:
+            insufficient_novelty = novelty_service.evaluate_novelty(None, member_count)
             return LiveInferenceResponse(
                 status="insufficient_data",
                 data_quality="DATA INSUFFICIENT",
@@ -54,6 +59,8 @@ class ProductionInferenceEngine:
                 reliability_score=None,
                 message="Reliability assessment unavailable — insufficient forecast evidence.",
                 features_extracted=None,
+                novelty_assessment=insufficient_novelty,
+                multimodel_evidence=insufficient_multimodel,
                 provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
             )
 
@@ -62,6 +69,7 @@ class ProductionInferenceEngine:
         lons = []
         for m in req.ensemble_members:
             if math.isnan(m.latitude) or math.isnan(m.longitude) or math.isinf(m.latitude) or math.isinf(m.longitude):
+                corrupt_novelty = novelty_service.evaluate_novelty(None, member_count)
                 return LiveInferenceResponse(
                     status="insufficient_data",
                     data_quality="DATA INSUFFICIENT",
@@ -71,9 +79,12 @@ class ProductionInferenceEngine:
                     reliability_score=None,
                     message="Reliability assessment unavailable — insufficient forecast evidence.",
                     features_extracted=None,
+                    novelty_assessment=corrupt_novelty,
+                    multimodel_evidence=insufficient_multimodel,
                     provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
                 )
             if not (-90.0 <= m.latitude <= 90.0 and -180.0 <= m.longitude <= 360.0):
+                invalid_novelty = novelty_service.evaluate_novelty(None, member_count)
                 return LiveInferenceResponse(
                     status="insufficient_data",
                     data_quality="DATA INSUFFICIENT",
@@ -83,6 +94,8 @@ class ProductionInferenceEngine:
                     reliability_score=None,
                     message="Reliability assessment unavailable — insufficient forecast evidence.",
                     features_extracted=None,
+                    novelty_assessment=invalid_novelty,
+                    multimodel_evidence=insufficient_multimodel,
                     provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
                 )
             lats.append(m.latitude)
@@ -132,9 +145,24 @@ class ProductionInferenceEngine:
             "anisotropy_ratio": round(anisotropy_ratio, 3),
         }
 
+        # 4. Production Model Inference: M1_SpreadOnly (preserve production probability)
         prob, state, score = self._predict_m1(req.lead_hours, ensemble_spread_km)
 
-        # 5. Formulate Operational Decision-Support Message
+        # 5. Scientific Novelty & Representation Intelligence (isolated support evaluation)
+        novelty_eval = novelty_service.evaluate_novelty(features_dict, member_count)
+
+        # 6. Multi-Model Consensus Evidence (single operational NWP model available)
+        multimodel_eval = multimodel_service.evaluate_live_cyclone_fix(
+            model_id="NCMRWF_NEPS",
+            center="NCMRWF",
+            initialization_time=req.forecast_cycle,
+            forecast_lead_hours=req.lead_hours,
+            valid_time=req.valid_time,
+            latitude=mean_lat,
+            longitude=mean_lon,
+        )
+
+        # 7. Formulate Operational Decision-Support Message
         message = self._generate_operational_message(
             state=state,
             lead_hours=req.lead_hours,
@@ -142,6 +170,10 @@ class ProductionInferenceEngine:
             divergence_km=divergence_km,
             data_quality=data_quality,
         )
+        if novelty_eval.representation_state == "NOVEL_STATE":
+            message += " (Advisory: ForecastGuard has limited historical support for this state; model extrapolation risk is elevated.)"
+        elif novelty_eval.representation_state == "LOW_SUPPORT":
+            message += " (Advisory: ForecastGuard has limited historical support for this state.)"
 
         return LiveInferenceResponse(
             status="ok",
@@ -152,6 +184,8 @@ class ProductionInferenceEngine:
             reliability_score=score,
             message=message,
             features_extracted=features_dict,
+            novelty_assessment=novelty_eval,
+            multimodel_evidence=multimodel_eval,
             provenance=self._build_provenance(req, member_count, data_quality),
         )
 

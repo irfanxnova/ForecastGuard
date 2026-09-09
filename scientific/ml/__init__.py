@@ -36,6 +36,22 @@ from scientific.ml.models import (
     SpreadOnlyBaseline,
     TreeBustModel,
 )
+from scientific.ml.novelty import (
+    NoveltyAssessment,
+    NoveltyDetector,
+    RepresentationState,
+    novelty_detector,
+)
+from scientific.ml.multimodel import (
+    ModelForecastFix,
+    MultiModelAgreementEngine,
+    MultiModelAgreementResult,
+    MultiModelAgreementState,
+    NWPModelAuditEntry,
+    NWPModelStatus,
+    NWP_DATA_AUDIT_CATALOG,
+    multimodel_engine,
+)
 
 __all__ = [
     # Models
@@ -47,6 +63,20 @@ __all__ = [
     "ContinuousErrorRegressor",
     "BustSeverityClassifier",
     "ModelError",
+    # Novelty & Abstention
+    "NoveltyAssessment",
+    "NoveltyDetector",
+    "RepresentationState",
+    "novelty_detector",
+    # Multi-Model Agreement
+    "MultiModelAgreementState",
+    "NWPModelStatus",
+    "NWPModelAuditEntry",
+    "ModelForecastFix",
+    "MultiModelAgreementResult",
+    "MultiModelAgreementEngine",
+    "multimodel_engine",
+    "NWP_DATA_AUDIT_CATALOG",
     # Data
     "MLDataset",
     "extract_ml_dataset",

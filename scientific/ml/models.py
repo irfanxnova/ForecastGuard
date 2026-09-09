@@ -276,26 +276,44 @@ class CalibratedLogisticModel(BaseBustModel):
         # Fit base model
         self.base_classifier.fit(X, y)
 
-        if X_val is not None and y_val is not None and len(np.unique(y_val)) > 1:
-            # Prefit calibration on hold-out validation partition
+        min_val_class = int(np.min(np.bincount(y_val))) if (y_val is not None and len(y_val) > 0 and len(np.unique(y_val)) > 1) else 0
+        if X_val is not None and y_val is not None and min_val_class >= 2:
+            # Calibration on hold-out validation partition
+            folds = min(self.cv, min_val_class)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message=".*prefit.*")
-                self.calibrated_classifier = CalibratedClassifierCV(
-                    estimator=self.base_classifier,
-                    method=self.calibration_method,
-                    cv="prefit",
-                )
+                try:
+                    from sklearn.frozen import FrozenEstimator
+                    self.calibrated_classifier = CalibratedClassifierCV(
+                        estimator=FrozenEstimator(self.base_classifier),
+                        method=self.calibration_method,
+                        cv=folds,
+                    )
+                except (ImportError, TypeError, ValueError):
+                    self.calibrated_classifier = CalibratedClassifierCV(
+                        estimator=self.base_classifier,
+                        method=self.calibration_method,
+                        cv="prefit",
+                    )
                 self.calibrated_classifier.fit(X_val, y_val)
         else:
             # K-fold cross-validated calibration on training set
             min_class_count = int(np.min(np.bincount(y)))
             folds = min(self.cv, min_class_count)
             if folds >= 2:
-                self.calibrated_classifier = CalibratedClassifierCV(
-                    estimator=self.base_classifier,
-                    method=self.calibration_method,
-                    cv=folds,
-                )
+                try:
+                    from sklearn.frozen import FrozenEstimator
+                    self.calibrated_classifier = CalibratedClassifierCV(
+                        estimator=FrozenEstimator(self.base_classifier),
+                        method=self.calibration_method,
+                        cv=folds,
+                    )
+                except (ImportError, TypeError, ValueError):
+                    self.calibrated_classifier = CalibratedClassifierCV(
+                        estimator=self.base_classifier,
+                        method=self.calibration_method,
+                        cv=folds,
+                    )
                 self.calibrated_classifier.fit(X, y)
             else:
                 self.calibrated_classifier = self.base_classifier
