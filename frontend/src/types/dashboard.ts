@@ -150,4 +150,10 @@ export interface DashboardState {
     max_km: number;
     min_km: number;
   };
+  operationalMode?: "LIVE" | "UPLOADED" | "REPLAY" | "DEMO";
+  verificationStatus?: "PENDING_VERIFICATION" | "VERIFIED";
+  analyzedForecast?: any;
+  analyzedMembers?: Array<{ member_id: number; latitude: number; longitude: number; central_pressure_hpa?: number }>;
+  analyzedCentroid?: { latitude: number; longitude: number; tolerance_radius_km: number; region_label?: string };
+  selectedRegion?: string;
 }

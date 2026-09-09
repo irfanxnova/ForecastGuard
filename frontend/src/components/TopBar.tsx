@@ -4,10 +4,11 @@ import { DashboardState } from "../types/dashboard";
 interface TopBarProps {
   state: DashboardState;
   onToggleDemoMode: () => void;
+  onOpenUpload?: () => void;
   backendOnline?: boolean;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, backendOnline = true }) => {
+export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, onOpenUpload, backendOnline = true }) => {
   return (
     <header className="top-system-bar">
       {/* Brand & Mission Left */}
@@ -87,7 +88,9 @@ export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, backend
           <div className="status-indicator">
             <span
               className={`status-dot ${
-                state.isDemoMode
+                state.verificationStatus === "PENDING_VERIFICATION"
+                  ? "cyan-dot pulse-circle"
+                  : state.isDemoMode
                   ? "amber-dot"
                   : state.reliability.state === "AWAITING_VERIFIED_CASE"
                   ? "gray-dot"
@@ -97,7 +100,9 @@ export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, backend
             <span className="status-label amber-label">VERIFICATION STATUS</span>
           </div>
           <span className="status-meta">
-            {state.isDemoMode
+            {state.verificationStatus === "PENDING_VERIFICATION"
+              ? "PENDING VERIFICATION (Prospective)"
+              : state.isDemoMode
               ? "Demo scenario"
               : state.reliability.state === "AWAITING_VERIFIED_CASE"
               ? "Awaiting aligned case"
@@ -117,10 +122,29 @@ export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, backend
           <span className="update-time">{state.cycle.lastUpdateUtc}</span>
         </div>
 
+        {/* Operational Flow: Upload Forecast (Professor Test Entrypoint) */}
+        {onOpenUpload && (
+          <button
+            className="demo-toggle-btn upload-forecast-btn"
+            onClick={onOpenUpload}
+            title="Upload forecast payload or select sample fixture to run through scientific bust pipeline"
+            id="btn-topbar-upload"
+          >
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>UPLOAD FORECAST</span>
+          </button>
+        )}
+
         {/* Mode Toggle Button */}
         <button
           className={`demo-toggle-btn ${
-            state.isDemoMode
+            state.operationalMode === "UPLOADED"
+              ? "upload-active"
+              : state.isDemoMode
               ? "demo-active"
               : state.reliability.state === "AWAITING_VERIFIED_CASE"
               ? "live-active"
@@ -128,10 +152,13 @@ export const TopBar: React.FC<TopBarProps> = ({ state, onToggleDemoMode, backend
           }`}
           onClick={onToggleDemoMode}
           title="Cycle between Real Verified Cyclone Case, Demo Scenario, and Live Pipeline"
+          id="btn-topbar-mode"
         >
           <span className="toggle-indicator" />
           <span>
-            {state.isDemoMode
+            {state.operationalMode === "UPLOADED"
+              ? "ANALYZED FORECAST"
+              : state.isDemoMode
               ? "SCENARIO DEMO"
               : state.reliability.state === "AWAITING_VERIFIED_CASE"
               ? "LIVE INFERENCE"

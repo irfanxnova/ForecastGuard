@@ -1,5 +1,4 @@
-"""API Router for Live Operational Inference and Model Governance."""
-
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 from fastapi import APIRouter, HTTPException, status
 
@@ -16,6 +15,11 @@ from backend.app.schemas.multimodel import (
     MultiModelEvidenceRequest,
     MultiModelEvidenceResponse,
 )
+from backend.app.schemas.forecast_input import (
+    ForecastAnalysisResponse,
+    ForecastInputPayload,
+    ForecastValidationResult,
+)
 from backend.app.services.inference_engine import production_engine
 from backend.app.services.model_config import (
     M0_CLIMATOLOGY_METADATA,
@@ -25,6 +29,7 @@ from backend.app.services.model_config import (
 )
 from backend.app.services.novelty_service import novelty_service
 from backend.app.services.multimodel_service import multimodel_service
+from backend.app.services.forecast_ingestion_service import forecast_ingestion_service
 
 router = APIRouter(prefix="/inference", tags=["Live Operational Inference"])
 
@@ -125,6 +130,72 @@ async def assess_multimodel_agreement(request: MultiModelEvidenceRequest) -> Mul
         ) from exc
 
 
+@router.post(
+    "/upload",
+    response_model=ForecastValidationResult,
+    summary="Validate & Ingest Uploaded Forecast",
+    description=(
+        "Inspects an uploaded forecast payload (NCMRWF NEPS ensemble fixes). "
+        "Validates cycle, lead time, coordinates, and ensemble member coverage without executing predictions."
+    ),
+)
+async def upload_forecast(payload: Dict[str, Any]) -> ForecastValidationResult:
+    """Validate raw uploaded forecast payload and report metadata / contract compliance."""
+    _, validation = forecast_ingestion_service.validate_payload(payload)
+    return validation
+
+
+@router.post(
+    "/analyze",
+    response_model=ForecastAnalysisResponse,
+    summary="Analyze Forecast Reliability (Core Operational Flow)",
+    description=(
+        "Executes the full ForecastGuard evidence pipeline on a validated forecast. "
+        "Generates WHERE + WHEN + RISK + WHY breakdown. Classifies prospective forecasts as "
+        "PENDING_VERIFICATION (never prematurely confirmed bust)."
+    ),
+)
+async def analyze_forecast(payload: Dict[str, Any]) -> ForecastAnalysisResponse:
+    """Analyze forecast reliability, generating WHERE, WHEN, RISK, and WHY evidence."""
+    parsed, validation = forecast_ingestion_service.validate_payload(payload)
+    if not validation.is_valid or parsed is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "Forecast validation failed. Input does not satisfy ForecastGuard contract.",
+                "errors": validation.errors,
+            },
+        )
+    return forecast_ingestion_service.analyze_forecast(parsed)
+
+
+@router.get(
+    "/sample-forecasts",
+    summary="Catalog of Real Verified NCMRWF Forecast Fixtures",
+    description=(
+        "Returns pre-built real forecast fixtures from verified North Indian Ocean archives "
+        "(e.g. MICHAUNG +24h, BIPARJOY +18h, MIDHILI +30h) for 1-click testing and demonstration."
+    ),
+)
+async def get_sample_forecasts() -> List[Dict[str, Any]]:
+    """Return catalog of real forecast fixtures for rapid professor testing."""
+    return forecast_ingestion_service.get_sample_forecasts()
+
+
+@router.get(
+    "/live-status",
+    summary="Live NWP Telemetry Feed Availability Status",
+    description=(
+        "Reports availability of live authorized NCMRWF / IMD telemetry feeds. "
+        "Reports LIVE DATA UNAVAILABLE when environment credentials are not present, "
+        "recommending Forecast Upload or Historical Replay."
+    ),
+)
+async def get_live_status() -> Dict[str, Any]:
+    """Return live telemetry feed connection status and available alternatives."""
+    return forecast_ingestion_service.get_live_feed_status()
+
+
 @router.get(
     "/model-info",
     summary="Active Production Model & Governance Metadata",
@@ -148,5 +219,10 @@ async def get_model_info() -> Dict[str, Any]:
             "decision_gate": "INSUFFICIENT_EVIDENCE",
             "operational_models": ["NCMRWF_NEPS"],
             "states": ["INSUFFICIENT_EVIDENCE", "AGREEMENT", "MODERATE_DISAGREEMENT", "HIGH_DISAGREEMENT"],
+        },
+        "operational_input": {
+            "pipeline": "ForecastIngestionService",
+            "supported_sources": ["NCMRWF_NEPS"],
+            "verification_states": ["PENDING_VERIFICATION", "VERIFIED"],
         },
     }

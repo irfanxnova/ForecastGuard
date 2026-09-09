@@ -8,6 +8,7 @@ interface HeroMapProps {
   onSelectLead: (lead: string) => void;
   onSelectVariable: (variable: string) => void;
   onSelectView: (view: string) => void;
+  onOpenUpload?: () => void;
 }
 
 export const HeroMap: React.FC<HeroMapProps> = ({
@@ -15,6 +16,7 @@ export const HeroMap: React.FC<HeroMapProps> = ({
   onSelectLead,
   onSelectVariable,
   onSelectView,
+  onOpenUpload,
 }) => {
   const [layers, setLayers] = useState({
     reliabilityRisk: true,
@@ -26,10 +28,18 @@ export const HeroMap: React.FC<HeroMapProps> = ({
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showHotspotDetail, setShowHotspotDetail] = useState(true);
+  const [regionFocus, setRegionFocus] = useState<"ALL" | "BOB" | "AS">("ALL");
 
   const toggleLayer = (layerKey: keyof typeof layers) => {
     setLayers((prev) => ({ ...prev, [layerKey]: !prev[layerKey] }));
   };
+
+  const svgViewBox =
+    regionFocus === "BOB"
+      ? "340 140 520 380"
+      : regionFocus === "AS"
+      ? "80 140 520 380"
+      : "0 0 880 540";
 
   return (
     <section className="panel hero-map-panel" aria-label="Cyclone Forecast Track Reliability">
@@ -48,6 +58,37 @@ export const HeroMap: React.FC<HeroMapProps> = ({
         </div>
 
         <div className="panel-controls">
+          {/* Regional Quick Focus */}
+          <div className="control-group region-quick-focus">
+            <span className="control-label">Domain:</span>
+            <div className="region-btn-group">
+              <button
+                type="button"
+                className={`btn-region-pill ${regionFocus === "ALL" ? "active" : ""}`}
+                onClick={() => setRegionFocus("ALL")}
+                title="Full South Asia Oceanic Domain"
+              >
+                FULL
+              </button>
+              <button
+                type="button"
+                className={`btn-region-pill ${regionFocus === "BOB" ? "active" : ""}`}
+                onClick={() => setRegionFocus("BOB")}
+                title="Focus on Bay of Bengal"
+              >
+                BoB
+              </button>
+              <button
+                type="button"
+                className={`btn-region-pill ${regionFocus === "AS" ? "active" : ""}`}
+                onClick={() => setRegionFocus("AS")}
+                title="Focus on Arabian Sea"
+              >
+                AS
+              </button>
+            </div>
+          </div>
+
           <div className="control-group">
             <span className="control-label">Variable:</span>
             <select
@@ -89,6 +130,22 @@ export const HeroMap: React.FC<HeroMapProps> = ({
             </select>
           </div>
 
+          {onOpenUpload && (
+            <button
+              className="btn-map-upload-action"
+              onClick={onOpenUpload}
+              title="Upload new operational forecast fix to analyze"
+              id="btn-map-upload-fix"
+            >
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>Upload Fix</span>
+            </button>
+          )}
+
           <button className="btn-icon" title="Toggle Fullscreen Map">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
@@ -101,7 +158,7 @@ export const HeroMap: React.FC<HeroMapProps> = ({
       <div className="map-canvas-container">
         <svg
           className="map-svg-viewport"
-          viewBox="0 0 880 540"
+          viewBox={svgViewBox}
           preserveAspectRatio="xMidYMid meet"
           style={{ transform: `scale(${zoomLevel})`, transformOrigin: "50% 50%" }}
         >
@@ -212,8 +269,194 @@ export const HeroMap: React.FC<HeroMapProps> = ({
             </g>
           )}
 
+          {/* Analyzed Operational Forecast Layer (Professor Operational Input Flow) */}
+          {state.operationalMode === "UPLOADED" && (() => {
+            const af = state.analyzedForecast;
+            const centroidLat = af?.where?.lat ?? state.analyzedCentroid?.lat ?? 14.5;
+            const centroidLon = af?.where?.lon ?? state.analyzedCentroid?.lon ?? 87.2;
+            const cPt = projectGeoToSvg(centroidLat, centroidLon);
+
+            const members = state.analyzedMembers && state.analyzedMembers.length > 0
+              ? state.analyzedMembers
+              : [];
+            const mPts = members.map((m) => ({
+              ...projectGeoToSvg(m.lat, m.lon),
+              ...m,
+            }));
+
+            const leadHours = af?.when?.lead_hours ?? parseInt(state.selectedLead.replace(/[^\d]/g, "") || "24", 10);
+            const tauKm = af?.risk?.tau_lead_km ?? Math.round(90 * (1 + 0.008 * leadHours) * 10) / 10;
+            // 1 deg lat = 18.8 SVG px = 111 km -> 1 km = 0.169 SVG px
+            const tauRadiusPx = Math.max(16, tauKm * 0.169);
+            const spreadKm = af?.where?.ensemble_spread_km ?? 184;
+            const spreadRadiusPx = Math.max(18, spreadKm * 0.169);
+            const isPending = (state.verificationStatus || af?.verification_status) === "PENDING_VERIFICATION";
+            const verifiedError = af?.verified_track_error_km;
+
+            return (
+              <g className="analyzed-forecast-layer" id="analyzed-forecast-layer">
+                {/* 1. Localized Thermal Risk Plume if reliability risk is active */}
+                {layers.reliabilityRisk && (
+                  <g className="analyzed-risk-plume">
+                    <circle
+                      cx={cPt.x}
+                      cy={cPt.y}
+                      r={spreadRadiusPx * 1.8}
+                      fill="url(#highRiskThermal)"
+                      opacity={Math.min(0.85, Math.max(0.3, (af?.risk?.score || state.reliability.score) / 100))}
+                      filter="url(#thermalGlow)"
+                    />
+                  </g>
+                )}
+
+                {/* 2. Spread Dispersion Envelope (Translucent Ellipse) */}
+                <ellipse
+                  cx={cPt.x}
+                  cy={cPt.y}
+                  rx={spreadRadiusPx}
+                  ry={Math.max(12, spreadRadiusPx / (af?.where?.anisotropy_ratio || 1.8))}
+                  fill="rgba(69, 183, 209, 0.10)"
+                  stroke="rgba(69, 183, 209, 0.45)"
+                  strokeWidth="1.2"
+                  strokeDasharray="4 3"
+                />
+
+                {/* 3. Tolerance Boundary Circle: tau(lead) = 90 * (1 + 0.008 * lead) km */}
+                <g className="tau-boundary-group">
+                  <circle
+                    cx={cPt.x}
+                    cy={cPt.y}
+                    r={tauRadiusPx}
+                    fill="none"
+                    stroke="#F5B83D"
+                    strokeWidth="1.5"
+                    strokeDasharray="5 3"
+                    opacity="0.8"
+                  />
+                  {/* Tau Boundary Label */}
+                  <text
+                    x={cPt.x}
+                    y={cPt.y - tauRadiusPx - 5}
+                    fill="#FFD36A"
+                    fontSize="8"
+                    fontWeight="600"
+                    textAnchor="middle"
+                    letterSpacing="0.03em"
+                  >
+                    {`τ(${leadHours}h) = ${tauKm.toFixed(0)} km tolerance`}
+                  </text>
+                </g>
+
+                {/* 4. Discrete Ensemble Member Vortex Fixes */}
+                {mPts.map((m, idx) => (
+                  <g key={`mem-${idx}`} className="ensemble-member-node">
+                    <title>{`Member ${m.member_id}: [${m.lat.toFixed(2)}°N, ${m.lon.toFixed(2)}°E] | MSLP: ${m.mslp_hpa ?? "N/A"} hPa | Wind: ${m.wind_kts ?? "N/A"} kts`}</title>
+                    <circle cx={m.x} cy={m.y} r="3" fill="#45B7D1" opacity="0.85" />
+                    <line
+                      x1={cPt.x}
+                      y1={cPt.y}
+                      x2={m.x}
+                      y2={m.y}
+                      stroke="#45B7D1"
+                      strokeWidth="0.6"
+                      strokeDasharray="1 2"
+                      opacity="0.35"
+                    />
+                  </g>
+                ))}
+
+                {/* 5. Forecast Mean Centroid Marker */}
+                <g className="forecast-centroid-node" transform={`translate(${cPt.x}, ${cPt.y})`}>
+                  <circle cx="0" cy="0" r="14" stroke="#F5B83D" strokeWidth="1.2" fill="none" opacity="0.4" className="pulse-circle" />
+                  <circle cx="0" cy="0" r="8" fill="rgba(245, 184, 61, 0.2)" stroke="#F5B83D" strokeWidth="1.5" />
+                  <polygon points="0,-6 6,0 0,6 -6,0" fill="#FFD36A" />
+                  <circle cx="0" cy="0" r="2" fill="#0A0F15" />
+                </g>
+
+                {/* 6. Ground Truth Fix (if VERIFIED) */}
+                {!isPending && verifiedError !== undefined && verifiedError !== null && (() => {
+                  const oPt = {
+                    x: cPt.x + Math.min(60, verifiedError * 0.169 * 0.7),
+                    y: cPt.y - Math.min(60, verifiedError * 0.169 * 0.7),
+                  };
+                  const isBust = verifiedError > tauKm;
+                  return (
+                    <g className="verified-obs-layer">
+                      <line
+                        x1={cPt.x}
+                        y1={cPt.y}
+                        x2={oPt.x}
+                        y2={oPt.y}
+                        stroke={isBust ? "#EF4444" : "#55D98A"}
+                        strokeWidth="2"
+                        strokeDasharray="3 2"
+                      />
+                      <circle cx={oPt.x} cy={oPt.y} r="5" fill="#45B7D1" stroke="#FFFFFF" strokeWidth="1.5" />
+                      <g transform={`translate(${(cPt.x + oPt.x) / 2}, ${(cPt.y + oPt.y) / 2 - 14})`}>
+                        <rect x="-60" y="-9" width="120" height="18" rx="3" fill="#0A0F15" fillOpacity="0.95" stroke={isBust ? "#EF4444" : "#55D98A"} strokeWidth="1" />
+                        <text x="0" y="3.5" fill={isBust ? "#FF6B6B" : "#55D98A"} fontSize="8.5" fontWeight="700" textAnchor="middle">
+                          {`${verifiedError.toFixed(1)} km Error (${isBust ? "BUST" : "ACCURATE"})`}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })()}
+
+                {/* 7. Operational Analysis Callout Card */}
+                <g transform={`translate(${Math.min(670, Math.max(120, cPt.x + 25))}, ${Math.max(50, cPt.y - 65)})`}>
+                  <rect
+                    x="-10"
+                    y="-12"
+                    width="210"
+                    height="80"
+                    rx="6"
+                    fill="#0B1118"
+                    fillOpacity="0.94"
+                    stroke={isPending ? "rgba(69, 183, 209, 0.6)" : "rgba(245, 184, 61, 0.6)"}
+                    strokeWidth="1.2"
+                    filter="drop-shadow(0 6px 16px rgba(0,0,0,0.7))"
+                  />
+                  <text x="2" y="5" fill="#FFFFFF" fontSize="10.5" fontWeight="700">
+                    {state.activeStormName || "ANALYZE"} +{leadHours}h Fix
+                  </text>
+                  <rect
+                    x="120"
+                    y="-6"
+                    width="74"
+                    height="14"
+                    rx="3"
+                    fill={isPending ? "rgba(69, 183, 209, 0.2)" : "rgba(245, 184, 61, 0.2)"}
+                  />
+                  <text
+                    x="157"
+                    y="4.5"
+                    fill={isPending ? "#45B7D1" : "#FFD36A"}
+                    fontSize="7.5"
+                    fontWeight="700"
+                    textAnchor="middle"
+                  >
+                    {isPending ? "PENDING VERIF." : "VERIFIED"}
+                  </text>
+
+                  <text x="2" y="21" fill="#A8B2BD" fontSize="8.5">
+                    {`Centroid: ${centroidLat.toFixed(1)}°N, ${centroidLon.toFixed(1)}°E (${af?.where?.basin || "Bay of Bengal"})`}
+                  </text>
+                  <text x="2" y="34" fill="#A8B2BD" fontSize="8.5">
+                    {`Spread: ${spreadKm.toFixed(0)} km | Members: ${members.length || 11}`}
+                  </text>
+                  <text x="2" y="47" fill={af?.risk?.score && af.risk.score > 50 ? "#FF6B6B" : "#FFD36A"} fontSize="8.5" fontWeight="700">
+                    {`Reliability Risk: ${af?.risk?.score ?? state.reliability.score}/100 (${af?.risk?.level ?? state.reliability.state})`}
+                  </text>
+                  <text x="2" y="59" fill="#71808C" fontSize="7.5">
+                    {isPending ? "Zero confirmed bust until observation reveals" : `Error vs τ: ${tauKm.toFixed(0)} km threshold`}
+                  </text>
+                </g>
+              </g>
+            );
+          })()}
+
           {/* Dynamic Cyclone Track Layer */}
-          {!state.isDemoMode && state.reliability.state !== "AWAITING_VERIFIED_CASE" && (() => {
+          {!state.isDemoMode && state.operationalMode !== "UPLOADED" && state.reliability.state !== "AWAITING_VERIFIED_CASE" && (() => {
             const hasLeads = state.leadsData && state.leadsData.length > 0;
             const stormName = state.activeStormName || "MIDHILI";
 
@@ -502,7 +745,30 @@ export const HeroMap: React.FC<HeroMapProps> = ({
 
         {/* Floating Scenario State Badge (Top Right of Map) */}
         <div className="map-scenario-overlay">
-          {state.isDemoMode ? (
+          {state.operationalMode === "UPLOADED" ? (
+            <div className="map-badge-scenario badge-uploaded">
+              <span
+                className={`badge-dot ${
+                  (state.verificationStatus || state.analyzedForecast?.verification_status) === "PENDING_VERIFICATION"
+                    ? "dot-cyan pulse-circle"
+                    : "dot-gold"
+                }`}
+              />
+              <div className="badge-text-col">
+                <span className="badge-title">
+                  {(state.verificationStatus || state.analyzedForecast?.verification_status) === "PENDING_VERIFICATION"
+                    ? "OPERATIONAL FORECAST INGESTED"
+                    : "VERIFIED POST-EVENT AUDIT"}
+                </span>
+                <span className="badge-sub">
+                  {state.activeStormName} {state.selectedLead} •{" "}
+                  {(state.verificationStatus || state.analyzedForecast?.verification_status) === "PENDING_VERIFICATION"
+                    ? "Pending Verification (No Confirmed Bust)"
+                    : `Track Error: ${state.analyzedForecast?.verified_track_error_km?.toFixed(1) ?? "N/A"} km`}
+                </span>
+              </div>
+            </div>
+          ) : state.isDemoMode ? (
             <div className="map-badge-scenario badge-demo">
               <span className="badge-dot dot-amber" />
               <div className="badge-text-col">

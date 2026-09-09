@@ -367,6 +367,99 @@ html, body {
   color: var(--semantic-stable);
 }
 
+.demo-toggle-btn.upload-active {
+  background: rgba(69, 183, 209, 0.16);
+  border: 1px solid rgba(69, 183, 209, 0.45);
+  color: var(--semantic-cyan);
+}
+
+.upload-forecast-btn {
+  background: rgba(245, 184, 61, 0.12);
+  border: 1px solid rgba(245, 184, 61, 0.35);
+  color: var(--amber-bright);
+}
+
+.upload-forecast-btn:hover {
+  background: rgba(245, 184, 61, 0.22);
+  border-color: var(--amber-primary);
+  box-shadow: 0 0 10px rgba(245, 184, 61, 0.25);
+}
+
+/* Regional Quick Focus Pill Buttons in HeroMap Header */
+.region-quick-focus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.region-btn-group {
+  display: flex;
+  background: rgba(15, 22, 30, 0.8);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.btn-region-pill {
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-region-pill:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-region-pill.active {
+  background: rgba(245, 184, 61, 0.2);
+  color: var(--amber-bright);
+  font-weight: 800;
+}
+
+/* Map Header Upload Button */
+.btn-map-upload-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  background: rgba(69, 183, 209, 0.14);
+  border: 1px solid rgba(69, 183, 209, 0.35);
+  border-radius: var(--radius-xs);
+  color: var(--semantic-cyan);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-map-upload-action:hover {
+  background: rgba(69, 183, 209, 0.24);
+  box-shadow: 0 0 8px rgba(69, 183, 209, 0.3);
+}
+
+/* Map Scenario Overlay Badge for Uploaded Forecast */
+.map-badge-scenario.badge-uploaded {
+  border-color: rgba(69, 183, 209, 0.4);
+  background: rgba(10, 15, 21, 0.94);
+}
+
+.dot-cyan {
+  background: var(--semantic-cyan);
+  box-shadow: 0 0 8px var(--semantic-cyan);
+}
+
+.cyan-dot {
+  background: var(--semantic-cyan);
+  box-shadow: 0 0 8px var(--semantic-cyan);
+}
+
 .toggle-indicator {
   width: 6px;
   height: 6px;

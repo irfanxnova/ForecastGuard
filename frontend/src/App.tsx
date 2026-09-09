@@ -11,6 +11,7 @@ import { EnsembleOutlook } from "./components/EnsembleOutlook";
 import { ForecastVsObserved } from "./components/ForecastVsObserved";
 import { DataEvidenceStatus } from "./components/DataEvidenceStatus";
 import { Footer } from "./components/Footer";
+import { ForecastUploadModal, ForecastAnalysisResponse, ForecastInputPayload } from "./components/ForecastUploadModal";
 
 // 16 Dedicated Analytical Views
 import { ActiveAlertsView } from "./components/views/ActiveAlertsView";
@@ -50,6 +51,7 @@ export const App: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [backendOnline, setBackendOnline] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
   // Probe backend health API
   const probeBackend = useCallback(async () => {
@@ -98,6 +100,43 @@ export const App: React.FC = () => {
       );
       setDashboardState(newState);
     }
+  };
+
+  // Apply analyzed forecast from upload modal into operational map
+  const handleApplyAnalyzedForecast = (
+    analysis: ForecastAnalysisResponse,
+    payload: ForecastInputPayload
+  ) => {
+    const leadStr = `+${String(payload.forecast_lead_hours).padStart(2, "0")}h`;
+    
+    setDashboardState((prev) => ({
+      ...prev,
+      operationalMode: "UPLOADED",
+      verificationStatus: analysis.verification_status,
+      analyzedForecast: analysis,
+      analyzedMembers: payload.members,
+      analyzedCentroid: { lat: analysis.where.lat, lon: analysis.where.lon },
+      activeStormName: payload.storm_name,
+      selectedLead: leadStr,
+      cycle: {
+        ...prev.cycle,
+        model: payload.model || "NCMRWF-NEPS",
+        initTime: `${payload.forecast_lead_hours}h LEAD`,
+        dateFormatted: payload.valid_time ? new Date(payload.valid_time).toUTCString().slice(0, 16) : prev.cycle.dateFormatted,
+        targetLead: leadStr,
+      },
+      reliability: {
+        ...prev.reliability,
+        state: (analysis.risk.level as any) || "HIGH_RISK",
+        score: analysis.risk.score,
+        description: analysis.why.top_risk_drivers.slice(0, 2).join(" • "),
+      },
+      noveltyAssessment: analysis.why.ood_evidence as any,
+      multiModelAgreement: analysis.why.multi_model_evidence as any,
+    }));
+
+    setActiveStorm(payload.storm_name);
+    setActiveTab("dashboard");
   };
 
   // Lead time selection handler
@@ -306,7 +345,12 @@ export const App: React.FC = () => {
   return (
     <div className="forecastguard-app">
       {/* Top Operational Strip */}
-      <TopBar state={dashboardState} onToggleDemoMode={handleToggleDemoMode} backendOnline={backendOnline} />
+      <TopBar
+        state={dashboardState}
+        onToggleDemoMode={handleToggleDemoMode}
+        onOpenUpload={() => setIsUploadModalOpen(true)}
+        backendOnline={backendOnline}
+      />
 
       {/* Main Body: Sidebar + Command Grid / Analytical Views */}
       <div className="app-body-layout">
@@ -321,6 +365,7 @@ export const App: React.FC = () => {
                 onSelectLead={handleSelectLead}
                 onSelectVariable={handleSelectVariable}
                 onSelectView={handleSelectView}
+                onOpenUpload={() => setIsUploadModalOpen(true)}
               />
               <ReliabilityStatus
                 state={dashboardState}
@@ -358,6 +403,13 @@ export const App: React.FC = () => {
 
       {/* Operational Footer */}
       <Footer />
+
+      {/* Forecast Ingestion / Analysis Modal (Professor Upload Flow) */}
+      <ForecastUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onApplyForecast={handleApplyAnalyzedForecast}
+      />
     </div>
   );
 };
