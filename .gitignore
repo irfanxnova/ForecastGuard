@@ -91,3 +91,5 @@ logs/
 *.swo
 .DS_Store
 Thumbs.db
+# Keep the verified deployment fixture available to Render
+!data/validation/test_tigge_midhili_00z_msl.grib
