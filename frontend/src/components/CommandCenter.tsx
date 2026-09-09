@@ -885,7 +885,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                         </div>
                       ) : (
                         <div>
-                          <strong>✓ STATISTICAL SUPPORT CONFIRMED:</strong> Forecast state lies within well-sampled reference envelope (n={repIntel.reference_population_size} verified leads).
+                          <strong>✓ WELL-REPRESENTED IN REFERENCE ARCHIVE:</strong> Forecast state lies within historical reference distribution (n={repIntel.reference_population_size} verified leads). Representation does not imply forecast correctness.
                         </div>
                       )}
                     </div>
