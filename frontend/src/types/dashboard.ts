@@ -529,3 +529,149 @@ export interface ReplayCaseResponse {
   overall_verification_summary: string;
 }
 
+export type OperationalMode = "LIVE_FORECAST" | "ANALYZE_FORECAST" | "HISTORICAL_REPLAY";
+
+export interface ForecastLocation {
+  name: string;
+  latitude: number;
+  longitude: number;
+  elevation_m?: number | null;
+  basin?: string | null;
+}
+
+export type AssessmentConfidence = "HIGH" | "MODERATE" | "LOW" | "INSUFFICIENT";
+
+export interface AssessmentConfidenceDetail {
+  level: AssessmentConfidence;
+  rationale: string;
+  telemetry_completeness: string;
+}
+
+export function evaluateAssessmentConfidence(params: {
+  isValidatedDomain: boolean;
+  supportScore?: number | null;
+  representationState?: string | null;
+  ensembleMemberCount?: number;
+  hasPriorCycle?: boolean;
+}): AssessmentConfidenceDetail {
+  if (!params.isValidatedDomain) {
+    return {
+      level: "INSUFFICIENT",
+      rationale: "Required telemetry or validation envelope unavailable outside validated cyclone domain.",
+      telemetry_completeness: "OUTSIDE_VALIDATED_DOMAIN",
+    };
+  }
+
+  const score = params.supportScore ?? 75;
+  const isNovel = params.representationState === "NOVEL_STATE" || score < 30;
+
+  if (isNovel) {
+    return {
+      level: "LOW",
+      rationale: "Sparse historical representation (novel forecast state) or sparse reference density.",
+      telemetry_completeness: "NOVEL_STATE_SPARSE_SUPPORT",
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      level: "HIGH",
+      rationale: "Complete 11-member ensemble telemetry and strong historical reference support (n=101).",
+      telemetry_completeness: "COMPLETE_11_MEMBER_NEPS",
+    };
+  }
+
+  return {
+    level: "MODERATE",
+    rationale: "Core telemetry available; validation support is limited or cycle revision is elevated.",
+    telemetry_completeness: "MODERATE_SUPPORT",
+  };
+}
+
+export interface DailyForecastStep {
+  lead_day: string; // "D+1" ... "D+10"
+  lead_hours: number; // 24 ... 240
+  valid_time: string;
+  temperature_max_c?: number | null;
+  temperature_min_c?: number | null;
+  precipitation_sum_mm?: number | null;
+  wind_speed_max_kmh?: number | null;
+  surface_pressure_hpa?: number | null;
+  weather_description?: string | null;
+  is_validated_domain: boolean;
+  capability_status: "VALIDATED_CYCLONE_DOMAIN" | "NOT_VALIDATED_FOR_THIS_INPUT_DOMAIN" | "INSUFFICIENT_EVIDENCE";
+  calibrated_bust_probability?: number | null;
+  bust_probability_display: string;
+  reliability_state: "STABLE" | "WATCH" | "HIGH_RISK" | "NOT_VALIDATED" | "INSUFFICIENT_EVIDENCE";
+  reliability_score?: number | null;
+  evidence_summary: string;
+  confidence_level?: AssessmentConfidence;
+  confidence_rationale?: string;
+}
+
+export interface LiveForecastResponse {
+  provider_name: string;
+  provider_type: "PUBLIC_NWP_INTEGRATION" | "NCMRWF_ARCHIVE_VALIDATED" | "CUSTOM_INGESTION";
+  provider_attribution: string;
+  forecast_cycle: string;
+  location: ForecastLocation;
+  capability_status: "VALIDATED_CYCLONE_DOMAIN" | "NOT_VALIDATED_FOR_THIS_INPUT_DOMAIN" | "INSUFFICIENT_EVIDENCE";
+  calibrated_bust_probability?: number | null;
+  bust_probability_display: string;
+  confidence_level?: AssessmentConfidence;
+  confidence_rationale?: string;
+  forecast_steps: DailyForecastStep[];
+  capability_notice: string;
+  scientific_boundary_notice: string;
+  evidence_summary?: {
+    status_message?: string;
+    evidence_rows?: Array<{
+      label: string;
+      value: string;
+      status: string;
+    }>;
+  } | null;
+  provenance: Record<string, any>;
+}
+
+export interface EnsembleMemberInput {
+  member_id: number;
+  latitude: number;
+  longitude: number;
+  central_pressure_hpa?: number | null;
+}
+
+export interface LiveInferenceRequest {
+  forecast_source?: string;
+  forecast_cycle: string;
+  valid_time: string;
+  lead_hours: number;
+  variable?: string;
+  deterministic_lat?: number | null;
+  deterministic_lon?: number | null;
+  ensemble_members: EnsembleMemberInput[];
+}
+
+export interface LiveInferenceResponse {
+  status: "ok" | "insufficient_data";
+  data_quality: "DATA COMPLETE" | "DATA DEGRADED" | "DATA INSUFFICIENT";
+  quality_detail: string;
+  reliability_state?: "STABLE" | "WATCH" | "VULNERABLE" | "SEVERE" | "DATA_INSUFFICIENT" | null;
+  bust_risk_percent?: number | null;
+  reliability_score?: number | null;
+  message: string;
+  features_extracted?: Record<string, number> | null;
+  novelty_assessment?: {
+    representation_state: string;
+    support_score: number;
+    decision: string;
+  } | null;
+  multimodel_evidence?: {
+    agreement_state: string;
+    consensus_dispersion_km?: number | null;
+  } | null;
+  provenance: Record<string, any>;
+}
+
+
+

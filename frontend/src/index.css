@@ -1,3 +1,5 @@
+@import "maplibre-gl/dist/maplibre-gl.css";
+
 /* ForecastGuard Production Design System — SIH26079 Visual North Star */
 :root {
   /* Backgrounds */
@@ -4479,5 +4481,98 @@ html, body {
   margin: 0;
   line-height: 1.4;
 }
+
+/* ==========================================================================
+   FORECASTGUARD 3D WEBGL MAP & PIN MARKER STYLES
+   ========================================================================== */
+
+.fg-3d-pin-marker {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f5b83d;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(245, 184, 61, 0.8);
+  z-index: 2;
+}
+
+.pin-pulse {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(245, 184, 61, 0.4);
+  animation: pinPulse 1.8s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 1;
+}
+
+@keyframes pinPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.18s ease-out forwards;
+}
+
+/* MapLibre Dark Instrument Control Overrides */
+.maplibregl-ctrl-group {
+  background: rgba(12, 19, 27, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  width: 28px !important;
+  height: 28px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.maplibregl-ctrl-icon {
+  filter: invert(0.85) sepia(0.2) hue-rotate(180deg) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
 
 
