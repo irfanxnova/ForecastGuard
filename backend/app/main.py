@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from backend.app.api.health import router as health_router
 from backend.app.api.historical import router as historical_router
 from backend.app.api.inference import router as inference_router
+from backend.app.api.regional import router as regional_router
 from backend.app.config import settings
 
 logger = logging.getLogger("forecastguard.api")
@@ -49,6 +50,10 @@ def create_app() -> FastAPI:
     )
     application.include_router(
         historical_router,
+        prefix=settings.api_v1_prefix,
+    )
+    application.include_router(
+        regional_router,
         prefix=settings.api_v1_prefix,
     )
 

@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
-import { HeroMap } from "./components/HeroMap";
-import { ReliabilityStatus } from "./components/ReliabilityStatus";
-import { ReliabilityTrajectory } from "./components/ReliabilityTrajectory";
-import { WhyReliabilityLow } from "./components/WhyReliabilityLow";
-import { AtmosphericContext } from "./components/AtmosphericContext";
-import { HistoricalMatches } from "./components/HistoricalMatches";
-import { EnsembleOutlook } from "./components/EnsembleOutlook";
-import { ForecastVsObserved } from "./components/ForecastVsObserved";
-import { DataEvidenceStatus } from "./components/DataEvidenceStatus";
+import { CommandCenter } from "./components/CommandCenter";
 import { Footer } from "./components/Footer";
 
 // 16 Dedicated Analytical Views
@@ -29,6 +21,7 @@ import { CalibrationView } from "./components/views/CalibrationView";
 import { AblationsView } from "./components/views/AblationsView";
 import { EvidenceDataView } from "./components/views/EvidenceDataView";
 import { StatisticsView } from "./components/views/StatisticsView";
+import { HistoricalReplayHero } from "./components/HistoricalReplayHero";
 
 import { DEMO_DASHBOARD_STATE, OPERATIONAL_LIVE_STATE } from "./data/operationalData";
 import { buildCycloneDashboardState, STORMS_CATALOG } from "./data/casesData";
@@ -142,24 +135,6 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleSelectVariable = (variable: string) => {
-    setDashboardState((prev) => ({ ...prev, selectedVariable: variable }));
-  };
-
-  const handleSelectView = (view: string) => {
-    setDashboardState((prev) => ({ ...prev, selectedView: view }));
-  };
-
-  // Smooth scroll to explanation panel
-  const handleInvestigateClick = () => {
-    const el = document.getElementById("why-reliability-low");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("highlight-panel-pulse");
-      setTimeout(() => el.classList.remove("highlight-panel-pulse"), 2000);
-    }
-  };
-
   // Render appropriate sidebar sub-view
   const renderActiveView = () => {
     switch (activeTab) {
@@ -250,6 +225,14 @@ export const App: React.FC = () => {
         );
 
       // MEMORY
+      case "replay":
+        return (
+          <HistoricalReplayHero
+            initialCaseId={activeCycle}
+            onNavigateTab={setActiveTab}
+            backendOnline={backendOnline}
+          />
+        );
       case "analogues":
         return (
           <HistoricalAnaloguesView
@@ -313,42 +296,13 @@ export const App: React.FC = () => {
         <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
         {activeTab === "dashboard" ? (
-          <main className="main-command-center">
-            {/* Row 1: Hero Map (58%) + Reliability Status (42%) */}
-            <div className="grid-row-hero">
-              <HeroMap
-                state={dashboardState}
-                onSelectLead={handleSelectLead}
-                onSelectVariable={handleSelectVariable}
-                onSelectView={handleSelectView}
-              />
-              <ReliabilityStatus
-                state={dashboardState}
-                onInvestigateClick={handleInvestigateClick}
-                onToggleObservationReveal={handleToggleObservationReveal}
-                onSelectStorm={handleSelectStorm}
-                onAssessReliability={handleInvestigateClick}
-              />
-            </div>
-
-            {/* Row 2: Reliability Trajectory (38%) + Why Low (32%) + Atmospheric Context (30%) */}
-            <div className="grid-row-middle">
-              <ReliabilityTrajectory
-                state={dashboardState}
-                onSelectLead={handleSelectLead}
-              />
-              <WhyReliabilityLow state={dashboardState} />
-              <AtmosphericContext state={dashboardState} />
-            </div>
-
-            {/* Row 3: Four Equal Bottom Analytical Cards */}
-            <div className="grid-row-bottom">
-              <HistoricalMatches state={dashboardState} />
-              <EnsembleOutlook state={dashboardState} />
-              <ForecastVsObserved state={dashboardState} />
-              <DataEvidenceStatus state={dashboardState} />
-            </div>
-          </main>
+          <CommandCenter
+            onInvestigateView={(viewName) => {
+              if (viewName === "ensembleAnalysis") setActiveTab("ensemble");
+              else setActiveTab(viewName);
+            }}
+            backendOnline={backendOnline}
+          />
         ) : (
           <main className="main-command-center sub-view-container">
             {renderActiveView()}
