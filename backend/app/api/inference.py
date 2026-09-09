@@ -1,9 +1,13 @@
 """API Router for Live Operational Inference and Model Governance."""
 
-from typing import Any, Dict, List
-from fastapi import APIRouter, HTTPException, status
+import json
+import os
+import tempfile
+from typing import Any, Dict, List, Optional
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from backend.app.schemas.inference import (
+    CanonicalForecastInput,
     LiveInferenceRequest,
     LiveInferenceResponse,
 )
@@ -47,6 +51,127 @@ async def predict_reliability(request: LiveInferenceRequest) -> LiveInferenceRes
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Inference evaluation failed: {str(exc)}",
+        ) from exc
+
+
+@router.post(
+    "/analyze",
+    response_model=LiveInferenceResponse,
+    summary="Canonical Forecast Analysis (Professor/Analyst Workflow)",
+    description=(
+        "Analyzes a forecast payload through the complete ForecastGuard pipeline: "
+        "Domain identification -> QC -> feature telemetry extraction -> calibration support check -> "
+        "calibrated probability or honest abstention -> explainable evidence."
+    ),
+)
+async def analyze_forecast(request: CanonicalForecastInput) -> LiveInferenceResponse:
+    """Execute canonical forecast analysis pipeline."""
+    try:
+        return production_engine.evaluate(request)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Forecast analysis failed: {str(exc)}",
+        ) from exc
+
+
+@router.post(
+    "/upload",
+    response_model=LiveInferenceResponse,
+    summary="Upload and Analyze Forecast File",
+    description=(
+        "Ingests a real forecast file (JSON payload or GRIB message), extracts issuance-time "
+        "telemetry, domain parameters, and coordinates, and delegates directly to the "
+        "canonical reliability pipeline. Enforces strict anti-leakage and honesty guards."
+    ),
+)
+async def upload_forecast_file(file: UploadFile = File(...)) -> LiveInferenceResponse:
+    """Ingest real forecast file and execute canonical reliability analysis."""
+    try:
+        content = await file.read()
+        filename = file.filename or ""
+
+        # 1. JSON file handling
+        if filename.endswith(".json") or content.strip().startswith(b"{"):
+            try:
+                data = json.loads(content.decode("utf-8"))
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Invalid JSON file formatting: {str(exc)}",
+                ) from exc
+
+            try:
+                forecast_input = CanonicalForecastInput(**data)
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Forecast validation failed: {str(exc)}",
+                ) from exc
+
+            return production_engine.evaluate(forecast_input)
+
+        # 2. GRIB / GRIB2 file handling
+        elif filename.endswith((".grb", ".grib", ".grib2")) or content.startswith(b"GRIB"):
+            from scientific.ingestion.grib import parse_grib_message
+            import eccodes
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".grib2") as tmp:
+                tmp.write(content)
+                tmp_path = tmp.name
+
+            try:
+                messages = []
+                with open(tmp_path, "rb") as f:
+                    while True:
+                        gid = eccodes.codes_grib_new_from_file(f)
+                        if gid is None:
+                            break
+                        msg_meta = parse_grib_message(gid, len(messages) + 1, compute_stats=False)
+                        messages.append(msg_meta)
+                        eccodes.codes_release(gid)
+
+                if not messages:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Uploaded GRIB file contains no readable messages.",
+                    )
+
+                first_msg = messages[0]
+                date_str = str(first_msg.data_date)
+                time_str = f"{first_msg.data_time:04d}" if first_msg.data_time else "0000"
+                forecast_cycle = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}T{time_str[:2]}:{time_str[2:]}:00Z"
+                lead_step = first_msg.step or 0
+
+                forecast_input = CanonicalForecastInput(
+                    forecast_source="GRIB Ingestion",
+                    forecast_cycle=forecast_cycle,
+                    valid_time=forecast_cycle,
+                    lead_hours=lead_step,
+                    variable=first_msg.name or first_msg.short_name or "Mean Sea Level Pressure (msl)",
+                    units=first_msg.units,
+                    latitude=first_msg.first_lat,
+                    longitude=first_msg.first_lon,
+                    grid_metadata={"ni": first_msg.ni, "nj": first_msg.nj, "grid_type": first_msg.grid_type},
+                    forecast_file_reference=filename,
+                    ensemble_members=[],
+                )
+                return production_engine.evaluate(forecast_input)
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=f"Unsupported file format '{filename}'. Please provide a JSON (.json) or GRIB (.grb/.grib2) file.",
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File ingestion failed: {str(exc)}",
         ) from exc
 
 
