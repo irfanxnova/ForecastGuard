@@ -274,13 +274,13 @@ class HistoricalMemoryService:
         query_dict: Dict[str, float] = {}
         query_lead: int = 24
         query_basin: Optional[str] = None
-        source_storm_name: Optional[str] = None
+        source_storm_name: Optional[str] = request.target_storm_name
 
         if request.query_case_id:
             ref_rec = self._records_by_id.get(request.query_case_id)
             if ref_rec is None:
                 raise ValueError(f"Reference case ID '{request.query_case_id}' not found in historical archive.")
-            source_storm_name = ref_rec["storm_name"]
+            source_storm_name = source_storm_name or ref_rec["storm_name"]
             query_lead = int(ref_rec["forecast_lead_hours"])
             query_basin = ref_rec["basin"]
             for feat in FEATURE_CONFIG.keys():
@@ -323,7 +323,7 @@ class HistoricalMemoryService:
                 continue
 
             # Optional cross-storm evaluation
-            if request.exclude_same_storm and source_storm_name and r["storm_name"] == source_storm_name:
+            if request.exclude_same_storm and source_storm_name and r["storm_name"].upper() == source_storm_name.upper():
                 continue
 
             # Basin constraint if specified

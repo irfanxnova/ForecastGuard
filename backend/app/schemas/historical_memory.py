@@ -155,6 +155,10 @@ class HistoricalMemorySearchRequest(BaseModel):
         default=False,
         description="If True, excludes candidate records from the same storm to evaluate cross-event generalization.",
     )
+    target_storm_name: Optional[str] = Field(
+        None,
+        description="Optional name of query storm to exclude when exclude_same_storm is True.",
+    )
 
 
 class HistoricalMemorySearchResponse(BaseModel):

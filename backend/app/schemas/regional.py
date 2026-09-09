@@ -172,6 +172,89 @@ class EnvironmentalIntelligenceSummary(BaseModel):
     )
 
 
+class TopAnalogueSummary(BaseModel):
+    """Top-ranked historical forecast state analogue."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str = Field(..., description="Analogue unique case ID")
+    storm_name: str = Field(..., description="Analogue cyclone name")
+    cycle_label: str = Field(..., description="Initialization cycle")
+    forecast_lead_hours: int = Field(..., description="Forecast lead hours")
+    similarity_percent: int = Field(..., ge=0, le=100, description="Similarity percentage")
+    standardized_distance: float = Field(..., ge=0.0, description="Standardized distance")
+    verified_status: str = Field(..., description="Ground truth verification status")
+    track_error_km: Optional[float] = Field(None, description="Verified track error in km")
+    threshold_km: Optional[float] = Field(None, description="Tolerance threshold in km")
+    is_bust: Optional[bool] = Field(None, description="Whether analogue experienced forecast bust")
+    spread_regime: Optional[str] = Field(None, description="Empirical spread regime")
+    failure_summary: Optional[str] = Field(None, description="Observed analogue outcome summary")
+
+
+class HistoricalMemorySummary(BaseModel):
+    """Historical forecast memory intelligence summary for structured evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["AVAILABLE", "INSUFFICIENT_EVIDENCE", "UNAVAILABLE"] = Field(
+        "AVAILABLE", description="Historical memory query status"
+    )
+    total_reference_cases: int = Field(..., description="Total verified historical records in memory")
+    matched_count: int = Field(..., description="Number of candidate analogues evaluated")
+    top_analogue: Optional[TopAnalogueSummary] = Field(None, description="Highest similarity analogue match")
+    analogue_summary_text: str = Field(..., description="Contextual summary of historical matches")
+    disclaimer: str = Field(
+        "Historical similarity provides contextual evidence and does NOT guarantee an identical operational outcome.",
+        description="Scientific non-causal disclaimer",
+    )
+
+
+class RepresentationSupportSummary(BaseModel):
+    """Novelty and reference support intelligence summary for structured evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    representation_state: Literal["WELL_REPRESENTED", "LOW_SUPPORT", "NOVEL_STATE", "INSUFFICIENT_EVIDENCE"] = Field(
+        ..., description="Deterministic representation state relative to historical reference population"
+    )
+    support_score: int = Field(..., ge=0, le=100, description="Historical representation index (0-100)")
+    novelty_score: float = Field(..., ge=0.0, le=1.0, description="Empirical novelty percentile ranking (0.0-1.0)")
+    distance_to_reference: Optional[float] = Field(None, description="Standardized distance to k=3 nearest reference neighbours")
+    nearest_reference_distance: Optional[float] = Field(None, description="Standardized distance to closest reference sample")
+    reference_population_size: int = Field(..., description="Historical reference population count (n=77)")
+    abstention_recommended: bool = Field(..., description="Whether system advises abstaining from high-confidence reliance")
+    abstention_reason: Optional[str] = Field(None, description="Rationale when abstention is recommended")
+    status_message: str = Field(..., description="Decision-support summary message")
+    decision_rule: str = Field(
+        "Novelty indicates statistical distance from historical reference population; novelty != forecast failure.",
+        description="Scientific non-causal firewall rule",
+    )
+
+
+class MultiModelEvidenceSummary(BaseModel):
+    """Multi-model NWP cross-center agreement intelligence summary for structured evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    state: Literal["INSUFFICIENT_EVIDENCE", "AGREEMENT", "MODERATE_DISAGREEMENT", "HIGH_DISAGREEMENT"] = Field(
+        "INSUFFICIENT_EVIDENCE", description="Cross-system agreement state"
+    )
+    models_evaluated: List[str] = Field(
+        default_factory=lambda: ["NCMRWF_NEPS (origin=dems)"],
+        description="List of NWP forecast systems evaluated"
+    )
+    available_model_count: int = Field(1, description="Number of operational models with valid data")
+    independent_nwp_centers_count: int = Field(1, description="Number of distinct independent NWP operational centers")
+    notice: str = Field(
+        "NCMRWF NEPS (origin=dems) is the sole operational NWP system in the validated local archive. Secondary global models (ECMWF, UKMO, NCEP) have zero historical overlap. Multi-model consensus is unavailable.",
+        description="Factual audit disclosure of archive availability"
+    )
+    is_abstention_recommended: bool = Field(False, description="Whether abstention is advised due to model disagreement")
+    validation_status: Literal["INSUFFICIENT_EVIDENCE", "EXPERIMENTAL"] = Field(
+        "INSUFFICIENT_EVIDENCE", description="Validation tier of cross-model consensus"
+    )
+
+
 class StructuredEvidenceObject(BaseModel):
     """Canonical structured evidence object backing regional reliability assessments."""
 
@@ -181,6 +264,15 @@ class StructuredEvidenceObject(BaseModel):
     trajectory: TrajectoryIntelligenceSummary
     environmental: Optional[EnvironmentalIntelligenceSummary] = Field(
         None, description="Environmental conditioning intelligence summary"
+    )
+    historical_memory: Optional[HistoricalMemorySummary] = Field(
+        None, description="Historical forecast memory analogue summary"
+    )
+    representation: Optional[RepresentationSupportSummary] = Field(
+        None, description="OOD representation and support summary"
+    )
+    multimodel: Optional[MultiModelEvidenceSummary] = Field(
+        None, description="Multi-model NWP evidence summary"
     )
     trend: Literal["increasing", "decreasing", "stable", "unavailable"]
     why_now: str = Field(..., description="Deterministic attribution explaining current reliability health")
@@ -308,6 +400,15 @@ class CanonicalRegionalAssessment(BaseModel):
     ] = Field(None, description="Categorical environmental state derived strictly from surface MSLP pressure structure")
     structured_evidence: Optional[StructuredEvidenceObject] = Field(
         None, description="Deterministic structured evidence object answering Why and What Changed"
+    )
+    historical_memory: Optional[HistoricalMemorySummary] = Field(
+        None, description="Historical forecast memory analogue summary"
+    )
+    representation: Optional[RepresentationSupportSummary] = Field(
+        None, description="OOD representation and support summary"
+    )
+    multimodel: Optional[MultiModelEvidenceSummary] = Field(
+        None, description="Multi-model NWP evidence summary"
     )
 
 
@@ -459,6 +560,11 @@ class RegionalTimelineStep(BaseModel):
     ensemble_state: Optional[str] = Field(None, description="Categorical ensemble state at this step")
     trajectory_state: Optional[str] = Field(None, description="Categorical trajectory state at this step")
     environmental_state: Optional[str] = Field(None, description="Categorical environmental state at this step")
+    historical_analogue_id: Optional[str] = Field(None, description="ID of closest historical analogue")
+    historical_similarity_percent: Optional[int] = Field(None, description="Similarity percentage of closest analogue")
+    representation_state: Optional[str] = Field(None, description="Representation state at this step")
+    support_score: Optional[int] = Field(None, description="Representation support score (0-100)")
+    multi_model_state: Optional[str] = Field(None, description="Multi-model agreement state at this step")
 
 
 class RegionalTimelineResponse(BaseModel):

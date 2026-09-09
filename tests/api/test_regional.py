@@ -221,3 +221,42 @@ def test_regional_features_catalog_endpoint_and_assessment():
     assert feat_dict["pairwise_member_disagreement"]["current_value"] > 0
     assert feat_dict["lead_time_hours"]["current_value"] == 24.0
 
+
+def test_unified_evidence_pipeline_integration():
+    """Verify unified evidence pipeline integration (Historical Memory, OOD Representation, Multi-Model)."""
+    resp = client.get("/api/v1/regional/assessment?case_id=MIDHILI_00Z&lead_time=D+1")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    bob = next((r for r in data["regions"] if r["region_id"] == "MAR_BOB"), None)
+    assert bob is not None
+
+    # 1. Historical Memory
+    assert bob["historical_memory"] is not None
+    assert bob["historical_memory"]["top_analogue"] is not None
+    assert bob["historical_memory"]["top_analogue"]["storm_name"] == "MICHAUNG"
+    assert bob["historical_memory"]["top_analogue"]["similarity_percent"] > 50
+    assert bob["historical_memory"]["disclaimer"] is not None
+
+    # 2. Representation Support / OOD
+    assert bob["representation"] is not None
+    assert bob["representation"]["representation_state"] in ["WELL_REPRESENTED", "LOW_SUPPORT", "NOVEL_STATE"]
+    assert bob["representation"]["support_score"] is not None
+    assert 0 <= bob["representation"]["support_score"] <= 100
+    assert bob["representation"]["abstention_recommended"] is False
+
+    # 3. Multi-Model Evidence
+    assert bob["multimodel"] is not None
+    assert bob["multimodel"]["state"] == "INSUFFICIENT_EVIDENCE"
+    assert bob["multimodel"]["available_model_count"] == 1
+    assert "NCMRWF" in bob["multimodel"]["models_evaluated"][0]
+    assert "unavailable" in bob["multimodel"]["notice"].lower()
+
+    # 4. Structured Evidence Object has matching fields
+    ev = bob["structured_evidence"]
+    assert ev is not None
+    assert ev["historical_memory"] is not None
+    assert ev["representation"] is not None
+    assert ev["multimodel"] is not None
+
+
