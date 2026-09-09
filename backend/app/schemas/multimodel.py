@@ -13,7 +13,7 @@ class ModelForecastFixInput(BaseModel):
     model_id: str = Field(..., description="Unique model identifier, e.g. NCMRWF_NEPS, ECMWF_IFS")
     center: str = Field(..., description="Operating meteorological centre name or abbreviation")
     initialization_time: datetime = Field(..., description="UTC cycle initialization timestamp")
-    forecast_lead_hours: int = Field(..., ge=0, le=168, description="Forecast lead step in hours")
+    forecast_lead_hours: int = Field(..., ge=0, le=240, description="Forecast lead step in hours")
     valid_time: datetime = Field(..., description="Target valid verification timestamp")
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Vortex latitude in degrees")
     longitude: float = Field(..., ge=-180.0, le=360.0, description="Vortex longitude in degrees")

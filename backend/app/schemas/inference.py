@@ -252,9 +252,157 @@ class LiveInferenceResponse(BaseModel):
         default="PENDING_VERIFICATION",
         description="Strict prospective status: ground truth is withheld/pending",
     )
+    confidence_breakdown: Optional["ConfidenceBreakdown"] = Field(
+        None, description="Structured breakdown of evidence confidence across 5 defensible pillars"
+    )
+    structured_explanation: Optional["StructuredExplanation"] = Field(
+        None, description="Deterministic structured explanations (WHY, WHAT CHANGED, WHY NOW)"
+    )
+    support_index: Optional[int] = Field(
+        None, ge=0, le=100, description="Empirical support index [0-100] reflecting evidence completeness; NOT a probability"
+    )
     provenance: InferenceProvenance = Field(..., description="Complete audit provenance metadata")
 
 
 # Backward compatibility alias
 ForecastAnalysisResponse = LiveInferenceResponse
+
+
+# =========================================================================
+# Medium-Range Reliability Timeline & Confidence System (Prompt 3/4)
+# =========================================================================
+
+class ConfidenceComponent(BaseModel):
+    """Component of the structured evidence-confidence assessment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str = Field(
+        ...,
+        description="Pillar status (e.g. COMPLETE, VALIDATED_DOMAIN, WELL_REPRESENTED, STRONG_CONSENSUS, VERIFIED_SOURCE)",
+    )
+    reason: str = Field(..., description="Empirical, non-causal rationale for this status")
+    source: str = Field(..., description="Telemetry channel or evidence source")
+
+
+class ConfidenceBreakdown(BaseModel):
+    """Structured breakdown of evidence confidence across 5 defensible pillars."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    data_coverage: ConfidenceComponent = Field(..., description="Completeness of ensemble members and fields")
+    model_validation: ConfidenceComponent = Field(..., description="Regional and horizon calibration domain status")
+    historical_representation: ConfidenceComponent = Field(..., description="Novelty distance to historical reference population")
+    ensemble_support: ConfidenceComponent = Field(..., description="Ensemble dispersion and agreement level")
+    provenance: ConfidenceComponent = Field(..., description="NWP origin and data lineage verification")
+
+
+class StructuredExplanation(BaseModel):
+    """Deterministic, non-causal structured explanations for operational decision support."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    why: str = Field(..., description="Strongest currently available evidence supporting the assessment")
+    what_changed: Optional[str] = Field(None, description="Meaningful sequential difference from prior forecast lead")
+    why_now: str = Field(..., description="Why the system is flagging this state at this lead/cycle")
+
+
+class TimelineLeadPoint(BaseModel):
+    """Single lead-time point along the D+1 -> D+10 reliability timeline."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    lead_name: str = Field(..., description="Lead day label e.g. D+1, D+2, ..., D+10")
+    lead_hours: int = Field(..., ge=0, le=240, description="Lead time in hours")
+    valid_time: str = Field(..., description="Forecast valid time in ISO 8601 UTC")
+    reliability_state: Optional[
+        Literal["STABLE", "WATCH", "VULNERABLE", "SEVERE", "DATA_INSUFFICIENT", "UNVALIDATED_DOMAIN"]
+    ] = Field(None, description="Operational forecast reliability category")
+    bust_probability: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Calibrated bust probability [0.0 - 1.0], or null if unvalidated"
+    )
+    probability_status: Literal["CALIBRATED", "NOT_VALIDATED", "INSUFFICIENT_EVIDENCE", "UNAVAILABLE"] = Field(
+        ..., description="Status of bust probability calculation"
+    )
+    assessment_confidence: Literal["HIGH", "MODERATE", "LOW", "INSUFFICIENT"] = Field(
+        ..., description="Confidence in assessment based on evidence completeness and validation support"
+    )
+    data_quality: Literal["DATA COMPLETE", "DATA DEGRADED", "DATA INSUFFICIENT"] = Field(
+        ..., description="Data completeness and quality indicator"
+    )
+    evidence_strength: Literal["STRONG", "MODERATE", "WEAK", "INSUFFICIENT"] = Field(
+        ..., description="Strength of available evidence"
+    )
+    validation_status: Literal["VALID", "PARTIAL", "NOT_VALIDATED", "INSUFFICIENT"] = Field(
+        ..., description="Domain validation status for this lead"
+    )
+    support_index: Optional[int] = Field(
+        None, ge=0, le=100, description="Empirical support index [0-100] reflecting evidence completeness; NOT a probability"
+    )
+    confidence_breakdown: ConfidenceBreakdown = Field(..., description="5-pillar structured confidence assessment")
+    structured_explanation: StructuredExplanation = Field(..., description="Deterministic WHY / WHAT CHANGED / WHY NOW")
+    evidence_summary: str = Field(..., description="Concise summary of available evidence")
+    features_extracted: Optional[Dict[str, float]] = Field(None, description="Prospective feature values")
+    feature_telemetry: Optional[List[FeatureTelemetryItem]] = Field(None, description="Audited feature telemetry")
+    novelty_assessment: Optional[NoveltyAssessmentResponse] = Field(None, description="OOD representation and support")
+    multimodel_evidence: Optional[MultiModelEvidenceResponse] = Field(None, description="Multi-model agreement evidence")
+
+
+class RiskEvolution(BaseModel):
+    """Evaluation of how reliability evolves across sequential forecast leads."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    trajectory_state: Literal["IMPROVING", "STABLE", "DEGRADING", "MIXED", "INSUFFICIENT_EVIDENCE"] = Field(
+        ..., description="Empirical trajectory trend across available sequential leads"
+    )
+    summary: str = Field(..., description="Non-causal explanation of risk evolution")
+    evidence_basis: List[str] = Field(..., description="List of specific features and metrics underpinning the trend")
+    lead_transitions: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Step-by-step transition delta records between leads"
+    )
+
+
+class MultiLeadForecastInput(BaseModel):
+    """Canonical multi-lead forecast payload for medium-range timeline evaluation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    forecast_source: str = Field(
+        default="NCMRWF TIGGE", description="Originating NWP ensemble prediction system."
+    )
+    model: Optional[str] = Field(
+        default=None, description="NWP model or center identifier e.g. NCMRWF_NEPS, ECMWF_IFS."
+    )
+    forecast_cycle: str = Field(
+        ..., description="Forecast initialization cycle in ISO 8601 UTC format."
+    )
+    variable: str = Field(
+        default="Mean Sea Level Pressure (msl)", description="Atmospheric variable used for analysis."
+    )
+    units: Optional[str] = Field(default=None, description="Explicit physical units.")
+    region: Optional[str] = Field(default=None, description="Target region or basin identifier.")
+    leads: List[CanonicalForecastInput] = Field(
+        ..., min_length=1, description="Chronological list of lead-step forecasts (D+1 through D+10)"
+    )
+
+
+class MediumRangeForecastAnalysisResponse(BaseModel):
+    """Comprehensive Medium-Range Reliability Timeline and Confidence Assessment."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "partial_data", "insufficient_data", "not_validated"] = Field(
+        ..., description="Overall operational response status"
+    )
+    forecast_source: str = Field(..., description="Originating NWP system")
+    forecast_cycle: str = Field(..., description="Forecast cycle initialization in UTC")
+    overall_assessment: Dict[str, Any] = Field(..., description="High-level operational overview across all horizons")
+    timeline: List[TimelineLeadPoint] = Field(..., description="Chronological D+1 -> D+10 reliability timeline")
+    risk_evolution: RiskEvolution = Field(..., description="Multi-lead trajectory evolution analysis")
+    confidence: ConfidenceBreakdown = Field(..., description="Overall 5-pillar confidence breakdown")
+    domain_identified: DomainIdentification = Field(..., description="Domain classification for this forecast")
+    evidence_summary: Dict[str, Any] = Field(..., description="Synthesized evidence across available leads")
+    provenance: InferenceProvenance = Field(..., description="Complete audit provenance metadata")
+
 

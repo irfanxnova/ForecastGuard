@@ -22,6 +22,7 @@ import { AblationsView } from "./components/views/AblationsView";
 import { EvidenceDataView } from "./components/views/EvidenceDataView";
 import { StatisticsView } from "./components/views/StatisticsView";
 import { HistoricalReplayHero } from "./components/HistoricalReplayHero";
+import { MediumRangeTimelineView } from "./components/views/MediumRangeTimelineView";
 
 import { DEMO_DASHBOARD_STATE, OPERATIONAL_LIVE_STATE } from "./data/operationalData";
 import { buildCycloneDashboardState, STORMS_CATALOG } from "./data/casesData";
@@ -167,6 +168,13 @@ export const App: React.FC = () => {
         );
 
       // INVESTIGATE
+      case "timeline":
+        return (
+          <MediumRangeTimelineView
+            backendOnline={backendOnline}
+            onNavigateTab={setActiveTab}
+          />
+        );
       case "explorer":
         return (
           <ForecastExplorerView

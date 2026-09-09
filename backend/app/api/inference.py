@@ -3,13 +3,15 @@
 import json
 import os
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from backend.app.schemas.inference import (
     CanonicalForecastInput,
     LiveInferenceRequest,
     LiveInferenceResponse,
+    MediumRangeForecastAnalysisResponse,
+    MultiLeadForecastInput,
 )
 from backend.app.schemas.novelty import (
     NoveltyAssessmentResponse,
@@ -56,17 +58,22 @@ async def predict_reliability(request: LiveInferenceRequest) -> LiveInferenceRes
 
 @router.post(
     "/analyze",
-    response_model=LiveInferenceResponse,
-    summary="Canonical Forecast Analysis (Professor/Analyst Workflow)",
+    response_model=Union[MediumRangeForecastAnalysisResponse, LiveInferenceResponse],
+    summary="Canonical Forecast Analysis (Single or Multi-Lead Workflow)",
     description=(
-        "Analyzes a forecast payload through the complete ForecastGuard pipeline: "
-        "Domain identification -> QC -> feature telemetry extraction -> calibration support check -> "
-        "calibrated probability or honest abstention -> explainable evidence."
+        "Analyzes a forecast payload through the complete ForecastGuard pipeline. "
+        "Accepts either a single forecast lead or a multi-lead timeline (D+1 to D+10). "
+        "Returns calibrated bust probabilities for 6h-48h, and honest abstention with "
+        "comprehensive evidence telemetry for medium-range horizons."
     ),
 )
-async def analyze_forecast(request: CanonicalForecastInput) -> LiveInferenceResponse:
-    """Execute canonical forecast analysis pipeline."""
+async def analyze_forecast(
+    request: Union[MultiLeadForecastInput, CanonicalForecastInput]
+) -> Union[MediumRangeForecastAnalysisResponse, LiveInferenceResponse]:
+    """Execute canonical forecast analysis pipeline for single or multi-lead inputs."""
     try:
+        if isinstance(request, MultiLeadForecastInput):
+            return production_engine.evaluate_timeline(request)
         return production_engine.evaluate(request)
     except Exception as exc:
         raise HTTPException(
@@ -76,8 +83,29 @@ async def analyze_forecast(request: CanonicalForecastInput) -> LiveInferenceResp
 
 
 @router.post(
+    "/timeline",
+    response_model=MediumRangeForecastAnalysisResponse,
+    summary="Medium-Range Reliability Timeline (D+1 to D+10)",
+    description=(
+        "Evaluates a multi-lead weather forecast across D+1 through D+10 horizons. "
+        "Produces chronological timeline points, 5-pillar confidence breakdowns, "
+        "non-causal risk evolution analysis, and deterministic structured explanations."
+    ),
+)
+async def evaluate_timeline(request: MultiLeadForecastInput) -> MediumRangeForecastAnalysisResponse:
+    """Execute medium-range reliability timeline assessment."""
+    try:
+        return production_engine.evaluate_timeline(request)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Timeline evaluation failed: {str(exc)}",
+        ) from exc
+
+
+@router.post(
     "/upload",
-    response_model=LiveInferenceResponse,
+    response_model=Union[MediumRangeForecastAnalysisResponse, LiveInferenceResponse],
     summary="Upload and Analyze Forecast File",
     description=(
         "Ingests a real forecast file (JSON payload or GRIB message), extracts issuance-time "
@@ -85,7 +113,9 @@ async def analyze_forecast(request: CanonicalForecastInput) -> LiveInferenceResp
         "canonical reliability pipeline. Enforces strict anti-leakage and honesty guards."
     ),
 )
-async def upload_forecast_file(file: UploadFile = File(...)) -> LiveInferenceResponse:
+async def upload_forecast_file(
+    file: UploadFile = File(...)
+) -> Union[MediumRangeForecastAnalysisResponse, LiveInferenceResponse]:
     """Ingest real forecast file and execute canonical reliability analysis."""
     try:
         content = await file.read()
@@ -100,6 +130,17 @@ async def upload_forecast_file(file: UploadFile = File(...)) -> LiveInferenceRes
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Invalid JSON file formatting: {str(exc)}",
                 ) from exc
+
+            # Detect if multi-lead payload or single lead
+            if "leads" in data:
+                try:
+                    multi_input = MultiLeadForecastInput(**data)
+                except Exception as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=f"Multi-lead forecast validation failed: {str(exc)}",
+                    ) from exc
+                return production_engine.evaluate_timeline(multi_input)
 
             try:
                 forecast_input = CanonicalForecastInput(**data)

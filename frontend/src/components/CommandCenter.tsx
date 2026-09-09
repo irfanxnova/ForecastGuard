@@ -202,6 +202,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             >
               ⏪ HISTORICAL REPLAY
             </button>
+            <button
+              className="cc-mode-tab-btn"
+              style={{ borderColor: "#0ea5e9", color: "#38bdf8" }}
+              onClick={() => onInvestigateView("timeline")}
+              title="Launch Medium-Range D+1..D+10 Workflow"
+            >
+              ⏱️ TIMELINE (D+1..D+10)
+            </button>
           </div>
         </div>
       </header>
@@ -253,7 +261,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           {isSelectedLeadAvailable ? (
             <span className="audit-tag green">✓ VALIDATED PROSPECTIVE HORIZON (+{assessmentData?.lead_hours || 24}h)</span>
           ) : (
-            <span className="audit-tag amber">⚠ INSUFFICIENT EVIDENCE / NOT VALIDATED</span>
+            <span
+              className="audit-tag amber"
+              style={{ cursor: "pointer" }}
+              onClick={() => onInvestigateView("timeline")}
+              title="Open Medium-Range Workflow"
+            >
+              ⚠ EXTENDED HORIZON &bull; OPEN MEDIUM-RANGE TIMELINE &rarr;
+            </span>
           )}
         </div>
       </div>

@@ -86,17 +86,38 @@ class MultiModelService:
         mslp_hpa: Optional[float] = None,
     ) -> MultiModelEvidenceResponse:
         """Evaluate multi-model evidence for a single operational model fix."""
-        fix = ModelForecastFixInput(
-            model_id=model_id,
-            center=center,
-            initialization_time=initialization_time,
-            forecast_lead_hours=forecast_lead_hours,
-            valid_time=valid_time,
-            latitude=latitude,
-            longitude=longitude,
-            mslp_hpa=mslp_hpa,
-        )
-        return self.evaluate_agreement(MultiModelEvidenceRequest(models=[fix]))
+        try:
+            fix = ModelForecastFixInput(
+                model_id=model_id,
+                center=center,
+                initialization_time=initialization_time,
+                forecast_lead_hours=forecast_lead_hours,
+                valid_time=valid_time,
+                latitude=latitude,
+                longitude=longitude,
+                mslp_hpa=mslp_hpa,
+            )
+            return self.evaluate_agreement(MultiModelEvidenceRequest(models=[fix]))
+        except Exception:
+            return MultiModelEvidenceResponse(
+                state="INSUFFICIENT_EVIDENCE",
+                models_evaluated=[model_id],
+                available_model_count=1,
+                valid_time=valid_time.isoformat() if isinstance(valid_time, datetime) else str(valid_time),
+                forecast_cycle=initialization_time.isoformat() if isinstance(initialization_time, datetime) else str(initialization_time),
+                lead_hours=forecast_lead_hours,
+                mean_track_separation_km=None,
+                max_track_separation_km=None,
+                pairwise_separations_km={},
+                mslp_disagreement_hpa=None,
+                agreement_notice="Forecast lead or fix parameters are outside multi-model evaluation domain.",
+                validation_status="INSUFFICIENT_EVIDENCE",
+                is_abstention_recommended=False,
+                provenance={
+                    "evaluated_at_utc": datetime.utcnow().isoformat() + "Z",
+                    "reason": "Parameter validation or lead range out of bounds",
+                },
+            )
 
 
 multimodel_service = MultiModelService()
