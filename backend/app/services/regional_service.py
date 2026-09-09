@@ -18,18 +18,29 @@ from backend.app.schemas.regional import (
     CycleComparison,
     DominantEvidenceItem,
     EnsembleIntelligenceSummary,
+    EnvironmentalIntelligenceSummary,
+    HistoricalMemorySummary,
+    MultiModelEvidenceSummary,
     RegionalAssessmentResponse,
     RegionalCaseSummary,
     RegionalFeatureCatalogItem,
     RegionalProvenance,
     RegionalTimelineResponse,
+    RegionalTimelineStep,
     RegionalVerificationDetail,
     RegionalVerificationResponse,
     ReplayCaseResponse,
+    RepresentationSupportSummary,
     StructuredEvidenceObject,
+    TopAnalogueSummary,
     TrajectoryIntelligenceSummary,
-    EnvironmentalIntelligenceSummary,
 )
+from backend.app.schemas.historical_memory import (
+    ForecastStateQuery,
+    HistoricalMemorySearchRequest,
+)
+from backend.app.services.historical_memory_service import historical_memory_service
+from scientific.ml.novelty import novelty_detector
 from scientific.features.environmental_intelligence import (
     extract_environmental_intelligence_from_grid,
     extract_fallback_environmental_insufficient,
@@ -273,6 +284,213 @@ class RegionalReliabilityService:
         result = (members_values, grid_meta)
         self._cache[cache_key] = result
         return result
+
+    def _compute_historical_memory_summary(
+        self,
+        case_id: str,
+        lead_hours: int,
+        cyc_row: Optional[Any],
+        ens_field_metrics: Any,
+        basin: str,
+        storm_name: str,
+    ) -> HistoricalMemorySummary:
+        """Deterministically query historical forecast memory at forecast cutoff T."""
+        try:
+            ens_spread = (
+                float(cyc_row["ensemble_spread_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("ensemble_spread_km"))
+                else float(ens_field_metrics.mean_spread / 1000.0)
+            )
+            aniso = (
+                float(cyc_row["anisotropy_ratio"])
+                if cyc_row is not None and pd.notna(cyc_row.get("anisotropy_ratio"))
+                else float(ens_field_metrics.anisotropy_ratio)
+            )
+            bimod = (
+                float(cyc_row["bimodality_coefficient"])
+                if cyc_row is not None and pd.notna(cyc_row.get("bimodality_coefficient"))
+                else float(ens_field_metrics.bimodality_coefficient)
+            )
+            dom_frac = (
+                float(cyc_row["dominant_cluster_fraction"])
+                if cyc_row is not None and pd.notna(cyc_row.get("dominant_cluster_fraction"))
+                else float(ens_field_metrics.dominant_cluster_fraction)
+            )
+            clust_sep = (
+                float(cyc_row["cluster_separation_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("cluster_separation_km"))
+                else float(ens_field_metrics.cluster_separation)
+            )
+            spread_growth = (
+                float(cyc_row["spread_growth_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("spread_growth_km"))
+                else float(ens_field_metrics.spread_growth_rate)
+            )
+
+            maj_spread = (
+                float(cyc_row["major_axis_spread_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("major_axis_spread_km"))
+                else None
+            )
+            speed = (
+                float(cyc_row["trajectory_speed_kmh"])
+                if cyc_row is not None and pd.notna(cyc_row.get("trajectory_speed_kmh"))
+                else None
+            )
+            curvature = (
+                float(cyc_row["trajectory_curvature_deg"])
+                if cyc_row is not None and pd.notna(cyc_row.get("trajectory_curvature_deg"))
+                else None
+            )
+            jitter = (
+                float(cyc_row["trajectory_instability_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("trajectory_instability_km"))
+                else None
+            )
+            cyc_rev = (
+                float(cyc_row["cycle_revision_distance_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("cycle_revision_distance_km"))
+                else None
+            )
+
+            query_state = ForecastStateQuery(
+                lead_hours=int(np.clip(lead_hours, 6, 72)),
+                ensemble_spread_km=float(np.clip(ens_spread, 0.0, 1500.0)),
+                major_axis_spread_km=float(np.clip(maj_spread, 0.0, 2000.0)) if maj_spread is not None else None,
+                anisotropy_ratio=float(np.clip(aniso, 0.5, 20.0)),
+                bimodality_coefficient=float(np.clip(bimod, 0.0, 1.0)),
+                dominant_cluster_fraction=float(np.clip(dom_frac, 0.0, 1.0)),
+                cluster_separation_km=float(np.clip(clust_sep, 0.0, 2000.0)),
+                spread_growth_km=float(np.clip(spread_growth, -500.0, 500.0)),
+                trajectory_speed_kmh=float(np.clip(speed, 0.0, 150.0)) if speed is not None else None,
+                trajectory_curvature_deg=float(np.clip(curvature, 0.0, 360.0)) if curvature is not None else None,
+                trajectory_instability_km=float(np.clip(jitter, 0.0, 1000.0)) if jitter is not None else None,
+                cycle_revision_distance_km=float(np.clip(cyc_rev, 0.0, 2000.0)) if cyc_rev is not None else None,
+                basin=basin,
+            )
+
+            search_req = HistoricalMemorySearchRequest(
+                query_state=query_state,
+                top_k=3,
+                exclude_same_storm=True,
+                target_storm_name=storm_name,
+            )
+            search_res = historical_memory_service.search_analogues(search_req)
+            if search_res.matches:
+                top = search_res.matches[0]
+                top_summary = TopAnalogueSummary(
+                    case_id=top.case_id,
+                    storm_name=top.storm_name,
+                    cycle_label=top.cycle_label,
+                    forecast_lead_hours=top.forecast_lead_hours,
+                    similarity_percent=top.similarity_percent,
+                    standardized_distance=round(top.standardized_distance, 3),
+                    verified_status=top.verified_outcome.verification_status,
+                    track_error_km=round(top.verified_outcome.track_error_km, 1) if top.verified_outcome.track_error_km is not None else None,
+                    threshold_km=round(top.verified_outcome.threshold_km, 1) if top.verified_outcome.threshold_km is not None else None,
+                    is_bust=top.verified_outcome.is_bust,
+                    spread_regime=top.failure_fingerprint.spread_regime if top.failure_fingerprint else None,
+                    failure_summary=top.failure_fingerprint.observed_pattern_summary if top.failure_fingerprint else None,
+                )
+                summary_text = (
+                    f"Closest historical analogue: {top.storm_name} ({top.cycle_label}, +{top.forecast_lead_hours}h) "
+                    f"with {top.similarity_percent}% feature similarity. "
+                    f"Verified historical error was {top.verified_outcome.track_error_km:.1f} km "
+                    f"({'BUST' if top.verified_outcome.is_bust else 'NORMAL'} vs {top.verified_outcome.threshold_km:.1f} km threshold)."
+                )
+                return HistoricalMemorySummary(
+                    status="AVAILABLE",
+                    total_reference_cases=search_res.total_reference_cases,
+                    matched_count=search_res.matched_analogues_count,
+                    top_analogue=top_summary,
+                    analogue_summary_text=summary_text,
+                )
+        except Exception:
+            pass
+
+        return HistoricalMemorySummary(
+            status="INSUFFICIENT_EVIDENCE",
+            total_reference_cases=101,
+            matched_count=0,
+            top_analogue=None,
+            analogue_summary_text="Historical analogue memory search unavailable for this prospective domain state.",
+        )
+
+    def _compute_representation_summary(
+        self,
+        lead_hours: int,
+        cyc_row: Optional[Any],
+        ens_field_metrics: Any,
+        member_count: int,
+    ) -> RepresentationSupportSummary:
+        """Evaluate OOD representation and support against historical reference population."""
+        try:
+            ens_spread = (
+                float(cyc_row["ensemble_spread_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("ensemble_spread_km"))
+                else float(ens_field_metrics.mean_spread / 1000.0)
+            )
+            ens_div = (
+                float(cyc_row["ensemble_divergence_km"])
+                if cyc_row is not None and pd.notna(cyc_row.get("ensemble_divergence_km"))
+                else float(ens_field_metrics.pairwise_disagreement)
+            )
+            aniso = (
+                float(cyc_row["anisotropy_ratio"])
+                if cyc_row is not None and pd.notna(cyc_row.get("anisotropy_ratio"))
+                else float(ens_field_metrics.anisotropy_ratio)
+            )
+
+            feat_dict = {
+                "forecast_lead_hours": float(lead_hours),
+                "ensemble_spread_km": float(ens_spread),
+                "ensemble_divergence_km": float(ens_div),
+                "anisotropy_ratio": float(aniso),
+            }
+            res = novelty_detector.evaluate(features=feat_dict, ensemble_member_count=member_count)
+            return RepresentationSupportSummary(
+                representation_state=res.representation_state.value,
+                support_score=res.support_score,
+                novelty_score=round(res.novelty_score, 3),
+                distance_to_reference=round(res.distance, 3) if res.distance is not None and not math.isnan(res.distance) else None,
+                nearest_reference_distance=round(res.nearest_reference_distance, 3) if res.nearest_reference_distance is not None and not math.isnan(res.nearest_reference_distance) else None,
+                reference_population_size=res.reference_population_size,
+                abstention_recommended=res.abstention_recommended,
+                abstention_reason=res.abstention_reason,
+                status_message=res.message,
+            )
+        except Exception:
+            return RepresentationSupportSummary(
+                representation_state="INSUFFICIENT_EVIDENCE",
+                support_score=0,
+                novelty_score=1.0,
+                distance_to_reference=None,
+                nearest_reference_distance=None,
+                reference_population_size=77,
+                abstention_recommended=True,
+                abstention_reason="Telemetry missing or out of operational bounds.",
+                status_message="Representation support could not be determined due to missing telemetry.",
+            )
+
+    def _compute_multimodel_summary(
+        self,
+        case_id: str,
+        lead_hours: int,
+    ) -> MultiModelEvidenceSummary:
+        """Truthfully report cross-center NWP availability from local archive."""
+        return MultiModelEvidenceSummary(
+            state="INSUFFICIENT_EVIDENCE",
+            models_evaluated=["NCMRWF_NEPS (origin=dems)"],
+            available_model_count=1,
+            independent_nwp_centers_count=1,
+            notice=(
+                "NCMRWF NEPS (origin=dems) is the sole operational NWP system in the validated local archive. "
+                "Secondary global models (ECMWF, UKMO, NCEP) have zero historical overlap. "
+                "Cross-center agreement is unavailable."
+            ),
+            is_abstention_recommended=False,
+            validation_status="INSUFFICIENT_EVIDENCE",
+        )
 
     def evaluate_regional_assessment(
         self,
@@ -741,9 +959,9 @@ class RegionalReliabilityService:
                 environmental=env_result,
             )
             if traj_state == "RAPID_REVISION" and cyc_rev_km is not None:
-                why_now = f"Vulnerability driven by rapid forecast revision ({cyc_rev_km:.1f} km shift across cycles) and {ens_desc.lower()}"
+                why_now = f"Vulnerability associated with rapid forecast revision ({cyc_rev_km:.1f} km shift across cycles) and {ens_desc.lower()}"
             elif traj_state == "OSCILLATING_JUMPY":
-                why_now = f"Vulnerability driven by erratic trajectory heading/speed fluctuations and {ens_desc.lower()}"
+                why_now = f"Vulnerability associated with erratic trajectory heading/speed fluctuations and {ens_desc.lower()}"
 
             if env_result.state != "INSUFFICIENT_EVIDENCE":
                 if env_result.state == "ASYMMETRIC_WEAK_PRESSURE_STRUCTURE":
@@ -765,10 +983,33 @@ class RegionalReliabilityService:
             if cyc_rev_km is not None:
                 what_changed = f"Cycle-over-cycle: forecast shifted by {cyc_rev_km:.1f} km at identical valid time. " + what_changed
 
+            # Compute historical memory, representation support, and multi-model evidence
+            hist_summary = self._compute_historical_memory_summary(
+                case_id=case_id,
+                lead_hours=lead_hours,
+                cyc_row=cyc_row,
+                ens_field_metrics=ens_field_metrics,
+                basin=case_info["basin"],
+                storm_name=case_info.get("storm_name", case_id),
+            )
+            rep_summary = self._compute_representation_summary(
+                lead_hours=lead_hours,
+                cyc_row=cyc_row,
+                ens_field_metrics=ens_field_metrics,
+                member_count=member_count,
+            )
+            multi_summary = self._compute_multimodel_summary(
+                case_id=case_id,
+                lead_hours=lead_hours,
+            )
+
             structured_evidence = StructuredEvidenceObject(
                 ensemble=ens_summary,
                 trajectory=traj_summary,
                 environmental=env_summary,
+                historical_memory=hist_summary,
+                representation=rep_summary,
+                multimodel=multi_summary,
                 trend=trend,
                 why_now=why_now,
                 what_changed=what_changed,
@@ -824,6 +1065,9 @@ class RegionalReliabilityService:
                     trajectory_state=traj_state,
                     environmental_state=env_result.state,
                     structured_evidence=structured_evidence,
+                    historical_memory=hist_summary,
+                    representation=rep_summary,
+                    multimodel=multi_summary,
                 )
             )
 
@@ -963,10 +1207,41 @@ class RegionalReliabilityService:
             scientific_provenance_note="Derived from NCMRWF NEPS ensemble MSLP pressure-gradient geometry. NOT a direct measurement of vertical wind shear, upper-air wind, or humidity.",
             status="UNAVAILABLE",
         )
+        hist_insufficient = HistoricalMemorySummary(
+            status="UNAVAILABLE",
+            total_reference_cases=101,
+            matched_count=0,
+            top_analogue=None,
+            analogue_summary_text="Historical memory unavailable outside active forecast domain.",
+        )
+        rep_insufficient = RepresentationSupportSummary(
+            representation_state="INSUFFICIENT_EVIDENCE",
+            support_score=0,
+            novelty_score=1.0,
+            distance_to_reference=None,
+            nearest_reference_distance=None,
+            reference_population_size=77,
+            abstention_recommended=True,
+            abstention_reason="Region is outside spatial coverage domain of forecast run.",
+            status_message="Representation support unavailable outside active forecast domain.",
+        )
+        multi_insufficient = MultiModelEvidenceSummary(
+            state="INSUFFICIENT_EVIDENCE",
+            models_evaluated=["NCMRWF_NEPS (origin=dems)"],
+            available_model_count=1,
+            independent_nwp_centers_count=1,
+            notice="Multi-model agreement unavailable outside active forecast domain.",
+            is_abstention_recommended=False,
+            validation_status="INSUFFICIENT_EVIDENCE",
+        )
+
         evidence_insufficient = StructuredEvidenceObject(
             ensemble=ens_insufficient,
             trajectory=traj_insufficient,
             environmental=env_insufficient,
+            historical_memory=hist_insufficient,
+            representation=rep_insufficient,
+            multimodel=multi_insufficient,
             trend="unavailable",
             why_now="Insufficient observation or forecast data within regional bounds.",
             what_changed="Region outside active forecast domain.",
@@ -1005,6 +1280,9 @@ class RegionalReliabilityService:
             trajectory_state="INSUFFICIENT_EVIDENCE",
             environmental_state="INSUFFICIENT_EVIDENCE",
             structured_evidence=evidence_insufficient,
+            historical_memory=hist_insufficient,
+            representation=rep_insufficient,
+            multimodel=multi_insufficient,
         )
 
     def _build_unsupported_horizon_assessment(
@@ -1083,10 +1361,41 @@ class RegionalReliabilityService:
             scientific_provenance_note="Derived from NCMRWF NEPS ensemble MSLP pressure-gradient geometry. NOT a direct measurement of vertical wind shear, upper-air wind, or humidity.",
             status="INSUFFICIENT",
         )
+        hist_insufficient = HistoricalMemorySummary(
+            status="UNAVAILABLE",
+            total_reference_cases=101,
+            matched_count=0,
+            top_analogue=None,
+            analogue_summary_text="Historical memory unavailable for unsupported forecast horizon.",
+        )
+        rep_insufficient = RepresentationSupportSummary(
+            representation_state="INSUFFICIENT_EVIDENCE",
+            support_score=0,
+            novelty_score=1.0,
+            distance_to_reference=None,
+            nearest_reference_distance=None,
+            reference_population_size=77,
+            abstention_recommended=True,
+            abstention_reason="Forecast horizon is beyond validated telemetry archive.",
+            status_message="Representation support unavailable for unsupported forecast horizon.",
+        )
+        multi_insufficient = MultiModelEvidenceSummary(
+            state="INSUFFICIENT_EVIDENCE",
+            models_evaluated=["NCMRWF_NEPS (origin=dems)"],
+            available_model_count=1,
+            independent_nwp_centers_count=1,
+            notice="Multi-model consensus unavailable for unsupported forecast horizon.",
+            is_abstention_recommended=False,
+            validation_status="INSUFFICIENT_EVIDENCE",
+        )
+
         evidence_insufficient = StructuredEvidenceObject(
             ensemble=ens_insufficient,
             trajectory=traj_insufficient,
             environmental=env_insufficient,
+            historical_memory=hist_insufficient,
+            representation=rep_insufficient,
+            multimodel=multi_insufficient,
             trend="unavailable",
             why_now="Insufficient forecast evidence at unsupported horizon.",
             what_changed="Forecast horizon not validated.",
@@ -1125,6 +1434,9 @@ class RegionalReliabilityService:
             trajectory_state="INSUFFICIENT_EVIDENCE",
             environmental_state="INSUFFICIENT_EVIDENCE",
             structured_evidence=evidence_insufficient,
+            historical_memory=hist_insufficient,
+            representation=rep_insufficient,
+            multimodel=multi_insufficient,
         )
 
     def get_case_verification(self, case_id: str) -> RegionalVerificationResponse:

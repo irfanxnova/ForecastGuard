@@ -99,6 +99,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   const ensIntel = selectedAssessment?.ensemble_intelligence || selectedAssessment?.structured_evidence?.ensemble;
   const trajIntel = selectedAssessment?.trajectory_intelligence || selectedAssessment?.structured_evidence?.trajectory;
   const envIntel = selectedAssessment?.environmental_intelligence || selectedAssessment?.structured_evidence?.environmental;
+  const histIntel = selectedAssessment?.historical_memory || selectedAssessment?.structured_evidence?.historical_memory;
+  const repIntel = selectedAssessment?.representation || selectedAssessment?.structured_evidence?.representation;
+  const multiIntel = selectedAssessment?.multimodel || selectedAssessment?.structured_evidence?.multimodel;
 
   const isSelectedLeadAvailable = currentCase.available_leads.includes(activeLead);
 
@@ -751,6 +754,207 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                     ⚠ <strong>MEASURED:</strong> NCMRWF NEPS MSLP-derived pressure-gradient geometry. <strong>UNAVAILABLE:</strong> Deep-layer shear, upper-air winds, humidity, SST (100% missingness). Surface pressure conditioning is NOT a direct measurement of vertical wind shear and is designated <strong>EXPERIMENTAL</strong> per AGENTS.md Rule 11.
                   </div>
                 </div>
+              </div>
+
+              {/* OPERATIONAL QUESTION 6: HAVE SIMILAR FORECAST STATES BEEN SEEN? (HISTORICAL ANALOGUES) */}
+              <div className="op-question-section highlight-historical">
+                <div className="op-question-header">
+                  <div className="op-question-title-wrap">
+                    <span className="op-question-num">Q6</span>
+                    <span className="op-question-title">HAVE SIMILAR FORECAST STATES BEEN SEEN?</span>
+                  </div>
+                  {histIntel?.top_analogue ? (
+                    <span className="badge-historical">
+                      {histIntel.top_analogue.similarity_percent}% MATCH
+                    </span>
+                  ) : (
+                    <span className="badge-historical" style={{ opacity: 0.6 }}>
+                      INSUFFICIENT EVIDENCE
+                    </span>
+                  )}
+                </div>
+
+                {histIntel?.top_analogue ? (
+                  <div className="analogue-summary-card">
+                    <div className="analogue-top-row">
+                      <span className="analogue-name">
+                        {histIntel.top_analogue.storm_name} ({histIntel.top_analogue.cycle_label}, +{histIntel.top_analogue.forecast_lead_hours}h)
+                      </span>
+                      <span className="analogue-sim-tag">
+                        d={histIntel.top_analogue.standardized_distance.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="telemetry-grid-2col" style={{ margin: "2px 0" }}>
+                      <div className="telemetry-metric-cell">
+                        <span className="telemetry-metric-title">SIMILARITY INDEX</span>
+                        <span className="telemetry-metric-value text-amber">
+                          {histIntel.top_analogue.similarity_percent}%
+                        </span>
+                        <span className="telemetry-metric-sub">Feature distance</span>
+                      </div>
+                      <div className="telemetry-metric-cell">
+                        <span className="telemetry-metric-title">HISTORICAL OUTCOME</span>
+                        <span className={`telemetry-metric-value ${histIntel.top_analogue.is_bust ? "text-red" : "text-green"}`}>
+                          {histIntel.top_analogue.track_error_km !== null && histIntel.top_analogue.track_error_km !== undefined
+                            ? `${histIntel.top_analogue.track_error_km.toFixed(1)} km`
+                            : "VERIFIED"}
+                        </span>
+                        <span className="telemetry-metric-sub">
+                          {histIntel.top_analogue.is_bust ? "⚠ Verified Bust" : "✓ Verified Nominal"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="env-narrative-note" style={{ fontSize: "9px" }}>
+                      <span className="env-desc-label" style={{ color: "#eab308" }}>Pattern Match:</span>
+                      {histIntel.top_analogue.failure_summary || histIntel.analogue_summary_text}
+                    </div>
+
+                    <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", lineHeight: 1.3 }}>
+                      ℹ {histIntel.disclaimer}
+                    </div>
+
+                    <button
+                      className="view-subview-link-btn"
+                      onClick={() => onInvestigateView("analogues")}
+                      title="Inspect 101-record historical memory and Bust Atlas"
+                    >
+                      Inspect Historical Analogues & Atlas →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="insufficient-evidence-box">
+                    <span className="lock-icon">🔒</span>
+                    <span>Historical forecast memory search unavailable for this prospective domain state.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* OPERATIONAL QUESTION 7: HOW WELL REPRESENTED IS THIS FORECAST STATE? (NOVELTY & ABSTENTION) */}
+              <div className="op-question-section highlight-novelty">
+                <div className="op-question-header">
+                  <div className="op-question-title-wrap">
+                    <span className="op-question-num">Q7</span>
+                    <span className="op-question-title">HOW WELL REPRESENTED IS THIS FORECAST STATE?</span>
+                  </div>
+                  {repIntel && (
+                    <span className={`badge-novelty ${repIntel.representation_state.toLowerCase()}`}>
+                      {repIntel.representation_state.replace(/_/g, " ")}
+                    </span>
+                  )}
+                </div>
+
+                {repIntel ? (
+                  <>
+                    <div className="telemetry-grid-2col">
+                      <div className="telemetry-metric-cell">
+                        <span className="telemetry-metric-title">SUPPORT SCORE</span>
+                        <span className={`telemetry-metric-value ${repIntel.support_score > 60 ? "text-green" : repIntel.support_score > 30 ? "text-amber" : "text-orange"}`}>
+                          {repIntel.support_score} / 100
+                        </span>
+                        <span className="telemetry-metric-sub">Reference density index</span>
+                      </div>
+                      <div className="telemetry-metric-cell">
+                        <span className="telemetry-metric-title">REFERENCE DISTANCE</span>
+                        <span className="telemetry-metric-value text-cyan">
+                          {repIntel.distance_to_reference !== null && repIntel.distance_to_reference !== undefined
+                            ? repIntel.distance_to_reference.toFixed(2)
+                            : "N/A"}
+                        </span>
+                        <span className="telemetry-metric-sub">k=3 standardized d</span>
+                      </div>
+                    </div>
+
+                    <div className="support-gauge-wrap">
+                      <div className="support-gauge-bar">
+                        <div
+                          className="support-gauge-fill"
+                          style={{
+                            width: `${repIntel.support_score}%`,
+                            background: repIntel.support_score > 60 ? "#55d98a" : repIntel.support_score > 30 ? "#ffd36a" : "#f97316",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={`support-callout-box ${repIntel.abstention_recommended ? "abstain" : "confirmed"}`}>
+                      {repIntel.abstention_recommended ? (
+                        <div>
+                          <strong>⚠ ABSTENTION ADVISORY:</strong> {repIntel.abstention_reason || "Forecast state is sparsely supported by historical reference archive. High-confidence reliance not advised."}
+                        </div>
+                      ) : (
+                        <div>
+                          <strong>✓ STATISTICAL SUPPORT CONFIRMED:</strong> Forecast state lies within well-sampled reference envelope (n={repIntel.reference_population_size} verified leads).
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", lineHeight: 1.3 }}>
+                      ℹ {repIntel.decision_rule}
+                    </div>
+
+                    <button
+                      className="view-subview-link-btn"
+                      onClick={() => onInvestigateView("evidence")}
+                      title="Inspect reference population distribution and support boundaries"
+                    >
+                      Inspect Reference Population & Support Matrix →
+                    </button>
+                  </>
+                ) : (
+                  <div className="insufficient-evidence-box">
+                    <span className="lock-icon">🔒</span>
+                    <span>OOD representation telemetry unavailable.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* OPERATIONAL QUESTION 8: IS INDEPENDENT MODEL CONSENSUS AVAILABLE? (MULTI-MODEL NWP) */}
+              <div className="op-question-section highlight-multimodel">
+                <div className="op-question-header">
+                  <div className="op-question-title-wrap">
+                    <span className="op-question-num">Q8</span>
+                    <span className="op-question-title">IS INDEPENDENT MODEL CONSENSUS AVAILABLE?</span>
+                  </div>
+                  <span className="badge-multimodel">
+                    {multiIntel?.state.replace(/_/g, " ") || "INSUFFICIENT EVIDENCE"}
+                  </span>
+                </div>
+
+                <div className="telemetry-grid-2col">
+                  <div className="telemetry-metric-cell">
+                    <span className="telemetry-metric-title">LOCAL ARCHIVE SYSTEMS</span>
+                    <span className="telemetry-metric-value text-amber">
+                      {multiIntel?.available_model_count || 1} / 4
+                    </span>
+                    <span className="telemetry-metric-sub">NCMRWF NEPS (origin=dems)</span>
+                  </div>
+                  <div className="telemetry-metric-cell">
+                    <span className="telemetry-metric-title">CROSS-CENTER CONSENSUS</span>
+                    <span className="telemetry-metric-value text-muted" style={{ color: "#94a3b8" }}>
+                      UNAVAILABLE
+                    </span>
+                    <span className="telemetry-metric-sub">Requires ≥2 NWP centers</span>
+                  </div>
+                </div>
+
+                <div className="env-narrative-note" style={{ borderLeft: "3px solid #6366f1" }}>
+                  <span className="env-desc-label" style={{ color: "#a5b4fc" }}>Data Reality:</span>
+                  {multiIntel?.notice || "NCMRWF NEPS is the sole operational NWP system in the validated local archive. Secondary global models (ECMWF, UKMO, NCEP) have zero historical overlap."}
+                </div>
+
+                <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", lineHeight: 1.3 }}>
+                  Rule 1 & 12 Non-Negotiable: ForecastGuard strictly refuses to fabricate synthetic consensus from absent global NWP archives.
+                </div>
+
+                <button
+                  className="view-subview-link-btn"
+                  onClick={() => onInvestigateView("multimodel")}
+                  title="Inspect cross-center NWP catalog and data availability audit"
+                >
+                  Inspect Multi-Model NWP Audit & Ingest Registry →
+                </button>
               </div>
 
               {/* Ground Truth Verification Section (Phase 8) */}

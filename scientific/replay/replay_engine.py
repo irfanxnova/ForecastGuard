@@ -411,6 +411,11 @@ class ReplayEngine:
                     ensemble_state=region_assessment.ensemble_state,
                     trajectory_state=region_assessment.trajectory_state,
                     environmental_state=region_assessment.environmental_state,
+                    historical_analogue_id=region_assessment.historical_memory.top_analogue.case_id if region_assessment.historical_memory and region_assessment.historical_memory.top_analogue else None,
+                    historical_similarity_percent=region_assessment.historical_memory.top_analogue.similarity_percent if region_assessment.historical_memory and region_assessment.historical_memory.top_analogue else None,
+                    representation_state=region_assessment.representation.representation_state if region_assessment.representation else None,
+                    support_score=region_assessment.representation.support_score if region_assessment.representation else None,
+                    multi_model_state=region_assessment.multimodel.state if region_assessment.multimodel else None,
                 )
             )
 

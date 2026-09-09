@@ -289,10 +289,60 @@ export interface EnvironmentalIntelligenceSummary {
   status: "COMPLETE" | "PARTIAL" | "UNAVAILABLE" | "INSUFFICIENT";
 }
 
+export interface TopAnalogueSummary {
+  case_id: string;
+  storm_name: string;
+  cycle_label: string;
+  forecast_lead_hours: number;
+  similarity_percent: number;
+  standardized_distance: number;
+  verified_status: string;
+  track_error_km?: number | null;
+  threshold_km?: number | null;
+  is_bust?: boolean | null;
+  spread_regime?: string | null;
+  failure_summary?: string | null;
+}
+
+export interface HistoricalMemorySummary {
+  status: "AVAILABLE" | "INSUFFICIENT_EVIDENCE" | "UNAVAILABLE";
+  total_reference_cases: number;
+  matched_count: number;
+  top_analogue?: TopAnalogueSummary | null;
+  analogue_summary_text: string;
+  disclaimer: string;
+}
+
+export interface RepresentationSupportSummary {
+  representation_state: "WELL_REPRESENTED" | "LOW_SUPPORT" | "NOVEL_STATE" | "INSUFFICIENT_EVIDENCE";
+  support_score: number;
+  novelty_score: number;
+  distance_to_reference?: number | null;
+  nearest_reference_distance?: number | null;
+  reference_population_size: number;
+  abstention_recommended: boolean;
+  abstention_reason?: string | null;
+  status_message: string;
+  decision_rule: string;
+}
+
+export interface MultiModelEvidenceSummary {
+  state: "INSUFFICIENT_EVIDENCE" | "AGREEMENT" | "MODERATE_DISAGREEMENT" | "HIGH_DISAGREEMENT";
+  models_evaluated: string[];
+  available_model_count: number;
+  independent_nwp_centers_count: number;
+  notice: string;
+  is_abstention_recommended: boolean;
+  validation_status: "INSUFFICIENT_EVIDENCE" | "EXPERIMENTAL";
+}
+
 export interface StructuredEvidenceObject {
   ensemble: EnsembleIntelligenceSummary;
   trajectory: TrajectoryIntelligenceSummary;
   environmental?: EnvironmentalIntelligenceSummary | null;
+  historical_memory?: HistoricalMemorySummary | null;
+  representation?: RepresentationSupportSummary | null;
+  multimodel?: MultiModelEvidenceSummary | null;
   trend: "increasing" | "decreasing" | "stable" | "unavailable";
   why_now: string;
   what_changed: string;
@@ -331,6 +381,9 @@ export interface CanonicalRegionalAssessment {
   trajectory_state?: TrajectoryState | null;
   environmental_state?: EnvironmentalState | null;
   structured_evidence?: StructuredEvidenceObject | null;
+  historical_memory?: HistoricalMemorySummary | null;
+  representation?: RepresentationSupportSummary | null;
+  multimodel?: MultiModelEvidenceSummary | null;
   ensemble_intelligence?: EnsembleIntelligenceSummary | null;
   trajectory_intelligence?: TrajectoryIntelligenceSummary | null;
   environmental_intelligence?: EnvironmentalIntelligenceSummary | null;
@@ -431,6 +484,11 @@ export interface RegionalTimelineStep {
   ensemble_state?: EnsembleState | null;
   trajectory_state?: TrajectoryState | null;
   environmental_state?: EnvironmentalState | null;
+  historical_analogue_id?: string | null;
+  historical_similarity_percent?: number | null;
+  representation_state?: "WELL_REPRESENTED" | "LOW_SUPPORT" | "NOVEL_STATE" | "INSUFFICIENT_EVIDENCE" | null;
+  support_score?: number | null;
+  multi_model_state?: "INSUFFICIENT_EVIDENCE" | "AGREEMENT" | "MODERATE_DISAGREEMENT" | "HIGH_DISAGREEMENT" | null;
 }
 
 export interface RegionalTimelineResponse {
