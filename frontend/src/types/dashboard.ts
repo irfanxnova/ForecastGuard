@@ -125,6 +125,11 @@ export interface DashboardState {
     evidenceConfidence: number | null;
     evidenceConfidenceDesc: string;
     keyMessage: string;
+    representationState?: "WELL_REPRESENTED" | "LOW_SUPPORT" | "NOVEL_STATE" | "INSUFFICIENT_EVIDENCE";
+    supportScore?: number;
+    representationDistance?: number | null;
+    abstentionRecommended?: boolean;
+    supportNotice?: string;
   };
   trajectory: TrajectoryPoint[];
   evidenceFactors: EvidenceFactor[];

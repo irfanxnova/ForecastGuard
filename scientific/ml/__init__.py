@@ -36,6 +36,12 @@ from scientific.ml.models import (
     SpreadOnlyBaseline,
     TreeBustModel,
 )
+from scientific.ml.novelty import (
+    NoveltyAssessment,
+    NoveltyDetector,
+    RepresentationState,
+    novelty_detector,
+)
 
 __all__ = [
     # Models
@@ -47,6 +53,11 @@ __all__ = [
     "ContinuousErrorRegressor",
     "BustSeverityClassifier",
     "ModelError",
+    # Novelty & Abstention
+    "NoveltyAssessment",
+    "NoveltyDetector",
+    "RepresentationState",
+    "novelty_detector",
     # Data
     "MLDataset",
     "extract_ml_dataset",

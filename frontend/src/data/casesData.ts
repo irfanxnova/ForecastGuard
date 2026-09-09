@@ -223,6 +223,41 @@ export function buildCycloneDashboardState(
     keyMessage = `${stormInfo.narrative} Verified track error at +${currentRecord.forecast_lead_hours}h is ${currentRecord.track_error_km.toFixed(1)} km vs tolerance threshold ${currentRecord.threshold_km.toFixed(1)} km.`;
   }
 
+  // Historical Reference Population Support Intelligence (n=77, May-Nov 2023)
+  const meanLead = 26.338, stdLead = 13.543;
+  const meanSpread = 99.386, stdSpread = 30.520;
+  const meanDiv = 368.496, stdDiv = 126.431;
+  const meanAniso = 2.301, stdAniso = 0.954;
+
+  const zLead = (currentRecord.forecast_lead_hours - meanLead) / stdLead;
+  const zSpread = (currentRecord.ensemble_spread_km - meanSpread) / stdSpread;
+  const zDiv = (currentRecord.ensemble_divergence_km - meanDiv) / stdDiv;
+  const zAniso = (currentRecord.anisotropy_ratio - meanAniso) / stdAniso;
+
+  const approxDistance = Math.sqrt(zLead * zLead * 0.2 + zSpread * zSpread * 0.35 + zDiv * zDiv * 0.2 + zAniso * zAniso * 0.25);
+
+  let representationState: "WELL_REPRESENTED" | "LOW_SUPPORT" | "NOVEL_STATE" | "INSUFFICIENT_EVIDENCE" = "WELL_REPRESENTED";
+  let abstentionRecommended = false;
+  let supportScore = 78;
+  let supportNotice = "Forecast state falls within the dense historical reference population.";
+
+  if (approxDistance > 1.36) {
+    representationState = "NOVEL_STATE";
+    abstentionRecommended = true;
+    supportScore = Math.max(0, Math.round((2.0 - approxDistance) * 35));
+    supportNotice = "ForecastGuard has limited historical support for this state. Model extrapolation risk is elevated.";
+  } else if (approxDistance > 0.84) {
+    representationState = "LOW_SUPPORT";
+    abstentionRecommended = false;
+    supportScore = Math.max(15, Math.round((1.36 - approxDistance) * 60 + 20));
+    supportNotice = "ForecastGuard has limited historical support for this state.";
+  } else {
+    representationState = "WELL_REPRESENTED";
+    abstentionRecommended = false;
+    supportScore = Math.min(95, Math.round(95 - approxDistance * 30));
+    supportNotice = "Forecast state falls within the dense historical reference population.";
+  }
+
   return {
     isDemoMode: false,
     activeStormName: stormInfo.name,
@@ -248,6 +283,11 @@ export function buildCycloneDashboardState(
       evidenceConfidence: null,
       evidenceConfidenceDesc: `8 verified synoptic fixes in this replay · 101 leads in archive`,
       keyMessage: keyMessage,
+      representationState: representationState,
+      supportScore: supportScore,
+      representationDistance: Math.round(approxDistance * 100) / 100,
+      abstentionRecommended: abstentionRecommended,
+      supportNotice: supportNotice,
     },
     trajectory: trajectory,
     evidenceFactors: [

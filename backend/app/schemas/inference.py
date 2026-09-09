@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from backend.app.schemas.novelty import NoveltyAssessmentResponse
+
 
 class EnsembleMemberInput(BaseModel):
     """Single ensemble member synoptic vortex fix."""
@@ -115,5 +117,8 @@ class LiveInferenceResponse(BaseModel):
     message: str = Field(..., description="Primary operational summary message")
     features_extracted: Optional[Dict[str, float]] = Field(
         None, description="Tier A/B strictly prospective predictor features"
+    )
+    novelty_assessment: Optional[NoveltyAssessmentResponse] = Field(
+        None, description="OOD representation, support status, and abstention intelligence"
     )
     provenance: InferenceProvenance = Field(..., description="Complete audit provenance metadata")
