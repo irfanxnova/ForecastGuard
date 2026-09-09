@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.app.schemas.novelty import NoveltyAssessmentResponse
+from backend.app.schemas.multimodel import MultiModelEvidenceResponse
 
 
 class EnsembleMemberInput(BaseModel):
@@ -120,5 +121,8 @@ class LiveInferenceResponse(BaseModel):
     )
     novelty_assessment: Optional[NoveltyAssessmentResponse] = Field(
         None, description="OOD representation, support status, and abstention intelligence"
+    )
+    multimodel_evidence: Optional[MultiModelEvidenceResponse] = Field(
+        None, description="Cross-model forecast agreement, NWP consensus dispersion, and availability evidence"
     )
     provenance: InferenceProvenance = Field(..., description="Complete audit provenance metadata")

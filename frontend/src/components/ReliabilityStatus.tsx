@@ -371,6 +371,71 @@ export const ReliabilityStatus: React.FC<ReliabilityStatusProps> = ({
         </div>
       )}
 
+      {/* Multi-Model Forecast Agreement Consensus Strip */}
+      <div
+        className="multimodel-status-bar"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 12px",
+          background: "rgba(15, 23, 42, 0.6)",
+          border: "1px solid rgba(148, 163, 184, 0.2)",
+          borderRadius: "4px",
+          marginTop: "6px",
+          fontSize: "11px",
+          flexWrap: "wrap",
+          gap: "8px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Monospace Cross-Model Alignment Bracket */}
+          <div
+            style={{
+              fontFamily: "monospace",
+              fontSize: "10px",
+              lineHeight: 1.2,
+              color: "#94A3B8",
+              background: "#0B111A",
+              padding: "4px 8px",
+              borderRadius: "3px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <div>NCMRWF [Active] ──┐</div>
+            <div>ECMWF  [Pending] ─┴── <strong style={{ color: "#F59E0B" }}>INSUFFICIENT EVIDENCE</strong></div>
+          </div>
+
+          <div>
+            <div style={{ fontWeight: 700, color: "#E2E8F0", fontSize: "11px" }}>
+              CROSS-SYSTEM NWP AGREEMENT: <span style={{ color: "#F59E0B" }}>INSUFFICIENT EVIDENCE</span>
+            </div>
+            <div style={{ color: "#94A3B8", fontSize: "10px", marginTop: "2px" }}>
+              {reliability.multiModelNotice || "Single operational NWP archive available (NCMRWF NEPS). Secondary independent models not ingested."}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span
+            style={{
+              fontSize: "9.5px",
+              padding: "2px 6px",
+              background: "rgba(245, 158, 11, 0.12)",
+              color: "#F59E0B",
+              borderRadius: "3px",
+              fontWeight: 600,
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+            }}
+          >
+            NWP Models: 1/2 Available
+          </span>
+          <span style={{ fontSize: "9px", color: "#64748B", fontStyle: "italic" }}>
+            Zero Synthetic Consensus
+          </span>
+        </div>
+      </div>
+
       {/* Key Message Callout */}
       <div className="key-message-card">
         <div className="message-icon">

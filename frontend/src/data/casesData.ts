@@ -288,6 +288,9 @@ export function buildCycloneDashboardState(
       representationDistance: Math.round(approxDistance * 100) / 100,
       abstentionRecommended: abstentionRecommended,
       supportNotice: supportNotice,
+      multiModelAgreementState: "INSUFFICIENT_EVIDENCE",
+      multiModelAvailableCount: 1,
+      multiModelNotice: "Multi-model agreement unavailable: single operational NWP archive (NCMRWF NEPS). Secondary independent models not ingested.",
     },
     trajectory: trajectory,
     evidenceFactors: [

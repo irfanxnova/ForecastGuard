@@ -24,6 +24,8 @@ from backend.app.services.model_config import (
     M1_SPREAD_ONLY_METADATA,
 )
 from backend.app.services.novelty_service import novelty_service
+from backend.app.services.multimodel_service import multimodel_service
+from backend.app.schemas.multimodel import MultiModelEvidenceRequest
 from scientific.validation.cyclone import haversine_distance
 
 
@@ -42,6 +44,7 @@ class ProductionInferenceEngine:
         """Execute deterministic inference pipeline with data QC and fail-safe guards."""
         # 1. Fail-Safe: Validate ensemble member count
         member_count = len(req.ensemble_members)
+        insufficient_multimodel = multimodel_service.evaluate_agreement(MultiModelEvidenceRequest(models=[]))
         if member_count < 5:
             insufficient_novelty = novelty_service.evaluate_novelty(None, member_count)
             return LiveInferenceResponse(
@@ -57,6 +60,7 @@ class ProductionInferenceEngine:
                 message="Reliability assessment unavailable — insufficient forecast evidence.",
                 features_extracted=None,
                 novelty_assessment=insufficient_novelty,
+                multimodel_evidence=insufficient_multimodel,
                 provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
             )
 
@@ -76,6 +80,7 @@ class ProductionInferenceEngine:
                     message="Reliability assessment unavailable — insufficient forecast evidence.",
                     features_extracted=None,
                     novelty_assessment=corrupt_novelty,
+                    multimodel_evidence=insufficient_multimodel,
                     provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
                 )
             if not (-90.0 <= m.latitude <= 90.0 and -180.0 <= m.longitude <= 360.0):
@@ -90,6 +95,7 @@ class ProductionInferenceEngine:
                     message="Reliability assessment unavailable — insufficient forecast evidence.",
                     features_extracted=None,
                     novelty_assessment=invalid_novelty,
+                    multimodel_evidence=insufficient_multimodel,
                     provenance=self._build_provenance(req, member_count, "DATA INSUFFICIENT"),
                 )
             lats.append(m.latitude)
@@ -145,7 +151,18 @@ class ProductionInferenceEngine:
         # 5. Scientific Novelty & Representation Intelligence (isolated support evaluation)
         novelty_eval = novelty_service.evaluate_novelty(features_dict, member_count)
 
-        # 6. Formulate Operational Decision-Support Message
+        # 6. Multi-Model Consensus Evidence (single operational NWP model available)
+        multimodel_eval = multimodel_service.evaluate_live_cyclone_fix(
+            model_id="NCMRWF_NEPS",
+            center="NCMRWF",
+            initialization_time=req.forecast_cycle,
+            forecast_lead_hours=req.lead_hours,
+            valid_time=req.valid_time,
+            latitude=mean_lat,
+            longitude=mean_lon,
+        )
+
+        # 7. Formulate Operational Decision-Support Message
         message = self._generate_operational_message(
             state=state,
             lead_hours=req.lead_hours,
@@ -168,6 +185,7 @@ class ProductionInferenceEngine:
             message=message,
             features_extracted=features_dict,
             novelty_assessment=novelty_eval,
+            multimodel_evidence=multimodel_eval,
             provenance=self._build_provenance(req, member_count, data_quality),
         )
 

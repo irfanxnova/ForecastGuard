@@ -130,6 +130,9 @@ export interface DashboardState {
     representationDistance?: number | null;
     abstentionRecommended?: boolean;
     supportNotice?: string;
+    multiModelAgreementState?: "INSUFFICIENT_EVIDENCE" | "AGREEMENT" | "MODERATE_DISAGREEMENT" | "HIGH_DISAGREEMENT";
+    multiModelNotice?: string;
+    multiModelAvailableCount?: number;
   };
   trajectory: TrajectoryPoint[];
   evidenceFactors: EvidenceFactor[];

@@ -11,6 +11,11 @@ from backend.app.schemas.novelty import (
     NoveltyAssessmentResponse,
     ReferencePopulationMetadataResponse,
 )
+from backend.app.schemas.multimodel import (
+    DataAuditSummaryResponse,
+    MultiModelEvidenceRequest,
+    MultiModelEvidenceResponse,
+)
 from backend.app.services.inference_engine import production_engine
 from backend.app.services.model_config import (
     M0_CLIMATOLOGY_METADATA,
@@ -19,6 +24,7 @@ from backend.app.services.model_config import (
     asdict,
 )
 from backend.app.services.novelty_service import novelty_service
+from backend.app.services.multimodel_service import multimodel_service
 
 router = APIRouter(prefix="/inference", tags=["Live Operational Inference"])
 
@@ -85,6 +91,41 @@ async def get_reference_population() -> ReferencePopulationMetadataResponse:
 
 
 @router.get(
+    "/multimodel/audit",
+    response_model=DataAuditSummaryResponse,
+    summary="NWP Multi-Model Archive Availability Audit",
+    description=(
+        "Returns authoritative audit of regional NWP forecast system availability in ForecastGuard. "
+        "Reports operational status, resolution, historical coverage, missingness, and decision gate outcome."
+    ),
+)
+async def get_multimodel_audit() -> DataAuditSummaryResponse:
+    """Return NWP archive availability audit and decision gate status."""
+    return multimodel_service.get_data_audit()
+
+
+@router.post(
+    "/multimodel/agreement",
+    response_model=MultiModelEvidenceResponse,
+    summary="Evaluate Multi-Model Forecast Agreement",
+    description=(
+        "Evaluates cross-model forecast agreement for prospective model fixes. "
+        "Calculates pairwise great-circle separation and intensity disagreement. "
+        "Returns INSUFFICIENT_EVIDENCE if fewer than 2 independent models are supplied."
+    ),
+)
+async def assess_multimodel_agreement(request: MultiModelEvidenceRequest) -> MultiModelEvidenceResponse:
+    """Evaluate cross-model agreement for independent model fixes."""
+    try:
+        return multimodel_service.evaluate_agreement(request)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Multi-model agreement evaluation failed: {str(exc)}",
+        ) from exc
+
+
+@router.get(
     "/model-info",
     summary="Active Production Model & Governance Metadata",
     description="Returns versioned metadata, training provenance, and research candidate status.",
@@ -101,5 +142,11 @@ async def get_model_info() -> Dict[str, Any]:
             "service": "NoveltyDetector",
             "reference_id": "EXPANDED_CYCLONE_10CYCLES_77LEADS_MAY_NOV_2023",
             "states": ["WELL_REPRESENTED", "LOW_SUPPORT", "NOVEL_STATE", "INSUFFICIENT_EVIDENCE"],
+        },
+        "multimodel_evidence": {
+            "service": "MultiModelAgreementEngine",
+            "decision_gate": "INSUFFICIENT_EVIDENCE",
+            "operational_models": ["NCMRWF_NEPS"],
+            "states": ["INSUFFICIENT_EVIDENCE", "AGREEMENT", "MODERATE_DISAGREEMENT", "HIGH_DISAGREEMENT"],
         },
     }
