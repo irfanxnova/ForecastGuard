@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   CanonicalRegionalAssessment,
   RegionalAssessmentResponse,
@@ -11,6 +11,7 @@ import {
 } from "../types/dashboard";
 import { RegionalHeroMap } from "./RegionalHeroMap";
 import { HistoricalReplayHero } from "./HistoricalReplayHero";
+import { MediumRangeTimelineView } from "./views/MediumRangeTimelineView";
 import { Map3D } from "./Map3D";
 import { ForecastAnalyzerModal } from "./ForecastAnalyzerModal";
 
@@ -40,7 +41,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   backendOnline,
 }) => {
   // Operational Modes
-  const [activeMode, setActiveMode] = useState<"live_forecast" | "regional_overview" | "historical_replay">("live_forecast");
+  const [activeMode, setActiveMode] = useState<"live_forecast" | "regional_overview" | "historical_replay" | "timeline">("live_forecast");
   const [isAnalyzerOpen, setIsAnalyzerOpen] = useState<boolean>(false);
   const [mapEngine, setMapEngine] = useState<"3d_webgl" | "2d_svg">("3d_webgl");
 
@@ -74,7 +75,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     let isMounted = true;
     async function fetchCases() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/regional/cases");
+        const res = await fetch("/api/v1/regional/cases");
         if (res.ok) {
           const data: RegionalCaseSummary[] = await res.json();
           if (isMounted && data.length > 0) {
@@ -94,7 +95,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     let isMounted = true;
     async function fetchLocations() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/forecast/locations");
+        const res = await fetch("/api/v1/forecast/locations");
         if (res.ok) {
           const data: ForecastLocation[] = await res.json();
           if (isMounted && data.length > 0) {
@@ -114,7 +115,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     setLoading(true);
     setErrorMsg(null);
     try {
-      const url = `http://127.0.0.1:8000/api/v1/regional/assessment?case_id=${encodeURIComponent(
+      const url = `/api/v1/regional/assessment?case_id=${encodeURIComponent(
         activeCaseId
       )}&lead_time=${encodeURIComponent(activeLead)}&variable=${encodeURIComponent(activeVariable)}`;
       const res = await fetch(url);
@@ -140,7 +141,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     setLiveForecastLoading(true);
     try {
       const caseParam = preferredCase ? `&case_id=${encodeURIComponent(preferredCase)}` : "";
-      const url = `http://127.0.0.1:8000/api/v1/forecast/live?latitude=${loc.latitude}&longitude=${loc.longitude}&location_name=${encodeURIComponent(
+      const url = `/api/v1/forecast/live?latitude=${loc.latitude}&longitude=${loc.longitude}&location_name=${encodeURIComponent(
         loc.name
       )}${caseParam}`;
       const res = await fetch(url);
@@ -222,6 +223,12 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   const togglePillar = (pillarKey: string) => {
     setExpandedPillar(expandedPillar === pillarKey ? null : pillarKey);
   };
+
+  // Memoized coordinates for 3D map
+  const mapCoordinates = useMemo(
+    () => ({ lat: selectedLocation.latitude, lon: selectedLocation.longitude }),
+    [selectedLocation.latitude, selectedLocation.longitude]
+  );
 
   return (
     <div className="command-center-container flex flex-col h-full overflow-hidden bg-[#070B10]">
@@ -326,7 +333,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             <span>{backendOnline ? "LIVE BACKEND" : "OFFLINE"}</span>
           </div>
 
-          {/* 3-Way Mode Switcher + Professor Mode Button */}
+          {/* 4-Way Mode Switcher + Professor Mode Button */}
           <div className="flex items-center gap-1 bg-[#0C121A] p-0.5 rounded-lg border border-white/10">
             <button
               type="button"
@@ -363,21 +370,24 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             </button>
             <button
               type="button"
+              className={`px-3 py-1 rounded text-xs font-mono font-medium transition-all ${
+                activeMode === "timeline"
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-semibold"
+                  : "text-cyan-400 hover:text-white"
+              }`}
+              onClick={() => setActiveMode("timeline")}
+              title="Launch Medium-Range D+1..D+10 Workflow"
+            >
+              ⏱️ TIMELINE
+            </button>
+            <button
+              type="button"
               className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono font-semibold bg-amber-500/15 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 transition-all ml-1 shadow-sm"
               onClick={() => setIsAnalyzerOpen(true)}
               title="Open Forecast Reliability Analyzer & Professor Mode deck"
             >
               <span>⚡</span>
               <span>ANALYZE</span>
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono font-semibold text-cyan-400 hover:bg-cyan-500/15 border border-cyan-500/30 transition-all ml-1 shadow-sm"
-              onClick={() => onInvestigateView("timeline")}
-              title="Launch Medium-Range D+1..D+10 Workflow"
-            >
-              <span>⏱️</span>
-              <span>TIMELINE</span>
             </button>
           </div>
         </div>
@@ -390,6 +400,16 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           onNavigateTab={onInvestigateView}
           backendOnline={backendOnline}
         />
+      ) : activeMode === "timeline" ? (
+        <div className="flex-1 min-h-0 overflow-y-auto bg-[#070B10]">
+          <MediumRangeTimelineView
+            backendOnline={backendOnline}
+            onNavigateTab={(tab) => {
+              if (tab === "dashboard") setActiveMode("live_forecast");
+              else onInvestigateView(tab);
+            }}
+          />
+        </div>
       ) : (
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Main Stage Grid: Dominant 3D Hero Map (Left) + Right Intelligence Rail (Right) */}
@@ -441,7 +461,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                     assessments={assessmentData?.regions || []}
                     selectedRegionId={selectedRegionId}
                     onSelectRegion={(regId) => setSelectedRegionId(regId)}
-                    selectedCoordinates={{ lat: selectedLocation.latitude, lon: selectedLocation.longitude }}
+                    selectedCoordinates={mapCoordinates}
                     onCoordinateSelect={handleMapCoordinateSelect}
                     activeCaseId={activeCaseId}
                     activeLeadHour={parseInt(activeLead.replace("D+", ""), 10) * 24}
@@ -531,7 +551,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                     <button
                       type="button"
                       className="text-amber-400/90 font-mono hover:underline cursor-pointer bg-transparent border-0 p-0 text-[10px]"
-                      onClick={() => onInvestigateView("timeline")}
+                      onClick={() => setActiveMode("timeline")}
                       title="Open Medium-Range Workflow"
                     >
                       ⚠ EXTENDED HORIZON &bull; OPEN TIMELINE &rarr;
@@ -579,6 +599,46 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 <div className="text-xs font-mono text-slate-400">
                   {selectedLocation.latitude.toFixed(2)}°N, {selectedLocation.longitude.toFixed(2)}°E • {selectedLocation.basin || "Maritime Sector"}
                 </div>
+
+                {/* LIVE 10-DAY FORECAST TELEMETRY STRIP */}
+                {currentDailyStep && (
+                  <div className="pt-2 border-t border-white/10 space-y-1.5">
+                    <div className="grid grid-cols-4 gap-1 text-[10px] font-mono">
+                      <div className="bg-[#0A1017] p-1.5 rounded text-center">
+                        <div className="text-slate-500 text-[9px]">MAX WIND</div>
+                        <div className="text-amber-300 font-bold mt-0.5">
+                          {currentDailyStep.wind_speed_max_kmh != null ? `${Math.round(currentDailyStep.wind_speed_max_kmh)} km/h` : "—"}
+                        </div>
+                      </div>
+                      <div className="bg-[#0A1017] p-1.5 rounded text-center">
+                        <div className="text-slate-500 text-[9px]">PRECIP 24H</div>
+                        <div className="text-cyan-300 font-bold mt-0.5">
+                          {currentDailyStep.precipitation_sum_mm != null ? `${currentDailyStep.precipitation_sum_mm.toFixed(1)} mm` : "—"}
+                        </div>
+                      </div>
+                      <div className="bg-[#0A1017] p-1.5 rounded text-center">
+                        <div className="text-slate-500 text-[9px]">SURFACE MSLP</div>
+                        <div className="text-slate-200 font-bold mt-0.5">
+                          {currentDailyStep.surface_pressure_hpa != null ? `${Math.round(currentDailyStep.surface_pressure_hpa)} hPa` : "—"}
+                        </div>
+                      </div>
+                      <div className="bg-[#0A1017] p-1.5 rounded text-center">
+                        <div className="text-slate-500 text-[9px]">TEMP RANGE</div>
+                        <div className="text-slate-300 font-bold mt-0.5">
+                          {currentDailyStep.temperature_max_c != null && currentDailyStep.temperature_min_c != null
+                            ? `${Math.round(currentDailyStep.temperature_min_c)}°–${Math.round(currentDailyStep.temperature_max_c)}°C`
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+                    {currentDailyStep.weather_description && (
+                      <div className="text-[11px] font-mono text-slate-300 flex items-center gap-1.5">
+                        <span className="text-amber-400">⚡</span>
+                        <span className="text-slate-200 font-semibold">{currentDailyStep.weather_description}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* PRIMARY LAYER (< 5s Answer): Bust Probability Card & Assessment Confidence Card */}

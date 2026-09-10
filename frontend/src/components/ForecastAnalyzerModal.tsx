@@ -200,7 +200,7 @@ export const ForecastAnalyzerModal: React.FC<ForecastAnalyzerModalProps> = ({
         };
       }
 
-      const response = await fetch("http://127.0.0.1:8000/api/v1/inference/predict", {
+      const response = await fetch("/api/v1/inference/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

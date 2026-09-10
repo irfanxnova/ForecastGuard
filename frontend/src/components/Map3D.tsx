@@ -147,14 +147,21 @@ const RELIABILITY_COLOR_MAP: Record<CanonicalReliabilityState, { fill: string; s
 
 function detectWebGLSupport(): boolean {
   if (typeof window === "undefined") return false;
-  // In automated testing environments (Playwright/CDP without hardware GPU), avoid WebGL lockup:
+  // In automated/headless testing environments (Playwright/CDP without hardware GPU), avoid WebGL lockup:
   if (window.navigator.webdriver) return false;
+  if (navigator.userAgent.includes("HeadlessChrome") || /Headless/i.test(navigator.userAgent)) return false;
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(
-      window.WebGLRenderingContext &&
-        (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
-    );
+    const gl = (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+    if (!gl) return false;
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    if (debugInfo) {
+      const renderer = (gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || "").toString().toLowerCase();
+      if (renderer.includes("swiftshader") || renderer.includes("llvmpipe") || renderer.includes("software")) {
+        return false;
+      }
+    }
+    return true;
   } catch (e) {
     return false;
   }
@@ -546,13 +553,15 @@ export const Map3D: React.FC<Map3DProps> = ({
     const map = mapRef.current;
     if (!map) return;
 
-    if (!selectedCoordinates) {
+    if (!selectedCoordinates || selectedCoordinates.lat === undefined || selectedCoordinates.lon === undefined) {
       if (pinMarkerRef.current) {
         pinMarkerRef.current.remove();
         pinMarkerRef.current = null;
       }
       return;
     }
+
+    const { lat, lon } = selectedCoordinates;
 
     if (!pinMarkerRef.current) {
       const el = document.createElement("div");
@@ -562,12 +571,12 @@ export const Map3D: React.FC<Map3DProps> = ({
         <div class="pin-dot"></div>
       `;
       pinMarkerRef.current = new maplibregl.Marker({ element: el, anchor: "center" })
-        .setLngLat([selectedCoordinates.lon, selectedCoordinates.lat])
+        .setLngLat([lon, lat])
         .addTo(map);
     } else {
-      pinMarkerRef.current.setLngLat([selectedCoordinates.lon, selectedCoordinates.lat]);
+      pinMarkerRef.current.setLngLat([lon, lat]);
     }
-  }, [selectedCoordinates]);
+  }, [selectedCoordinates?.lat, selectedCoordinates?.lon]);
 
   // Preset Views
   const flyToPreset = (presetKey: string) => {
@@ -606,7 +615,7 @@ export const Map3D: React.FC<Map3DProps> = ({
   ).sort((a, b) => a.forecast_lead_hours - b.forecast_lead_hours);
 
   return (
-    <div className="fg-3d-map-wrapper relative w-full h-full min-h-[420px] overflow-hidden bg-[#0A1017] rounded-xl border border-border/40 shadow-2xl">
+    <div className="fg-3d-map-wrapper relative w-full h-full min-h-0 overflow-hidden bg-[#0A1017] rounded-xl border border-border/40 shadow-2xl">
       {hasWebGL ? (
         /* Real WebGL Map Container */
         <div ref={mapContainerRef} className="w-full h-full absolute inset-0" />

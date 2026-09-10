@@ -144,11 +144,10 @@ export interface MediumRangeForecastAnalysisResponse {
 }
 
 export interface EnsembleMemberInput {
-  member_id: string;
+  member_id: number;
   latitude: number;
   longitude: number;
-  mslp_hpa?: number;
-  wind_speed_kts?: number;
+  central_pressure_hpa?: number;
 }
 
 export interface CanonicalForecastInput {

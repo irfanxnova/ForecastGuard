@@ -19,11 +19,10 @@ function generateEnsemble(
     const dLat = r * Math.cos(angle);
     const dLon = (r * Math.sin(angle)) / Math.cos((centerLat * Math.PI) / 180);
     members.push({
-      member_id: `mem_${String(i + 1).padStart(2, "0")}`,
+      member_id: i + 1,
       latitude: Number((centerLat + dLat).toFixed(4)),
       longitude: Number((centerLon + dLon).toFixed(4)),
-      mslp_hpa: Number((baseMslp + (i % 5) * 1.2 - 2.5).toFixed(1)),
-      wind_speed_kts: Number((45.0 - (i % 4) * 3.0).toFixed(1)),
+      central_pressure_hpa: Number((baseMslp + (i % 5) * 1.2 - 2.5).toFixed(1)),
     });
   }
   return members;
