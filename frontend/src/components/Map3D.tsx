@@ -167,15 +167,18 @@ function detectWebGLSupport(): boolean {
   }
 }
 
+const CARTO_BASEMAP_KEY = (import.meta.env.VITE_CARTO_BASEMAP_KEY || "").trim();
+const CARTO_QUERY = CARTO_BASEMAP_KEY ? `?key=${encodeURIComponent(CARTO_BASEMAP_KEY)}` : "";
+
 const CARTO_DARK_STYLE: maplibregl.StyleSpecification = {
   version: 8,
   sources: {
     "carto-dark": {
       type: "raster",
       tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
+        `https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png${CARTO_QUERY}`,
+        `https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png${CARTO_QUERY}`,
+        `https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png${CARTO_QUERY}`,
       ],
       tileSize: 256,
       attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
@@ -354,6 +357,15 @@ export const Map3D: React.FC<Map3DProps> = ({
         bearing: 0,
         maxPitch: 65,
         attributionControl: false,
+        transformRequest: (url: string) => {
+          if (CARTO_BASEMAP_KEY && (url.includes("cartocdn.com") || url.includes("carto.com"))) {
+            if (!url.includes("key=")) {
+              const sep = url.includes("?") ? "&" : "?";
+              return { url: `${url}${sep}key=${encodeURIComponent(CARTO_BASEMAP_KEY)}` };
+            }
+          }
+          return { url };
+        },
       });
 
       mapRef.current = map;
